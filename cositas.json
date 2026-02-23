@@ -1,0 +1,70 @@
+{
+    "version": "1.0",
+    "name": "TestFSM",
+    "initial_state": "Idle",
+    "states": [
+        {
+            "id": "Idle",
+            "enter": [
+                {
+                    "action": "PlayAnim",
+                    "params": {
+                        "Name": "Idle"
+                    }
+                }
+            ],
+            "tick": [
+                {
+                    "action": "Move",
+                    "params": {
+                        "Speed": "3"
+                    }
+                }
+            ],
+            "exit": []
+        },
+        {
+            "id": "Move",
+            "enter": [
+                {
+                    "action": "PlayAnim",
+                    "params": {
+                        "Name": "Move"
+                    }
+                }
+            ],
+            "tick": [
+                {
+                    "action": "Move",
+                    "params": {
+                        "Speed": "8"
+                    }
+                }
+            ],
+            "exit": []
+        },
+        {
+            "id": "Attack",
+            "enter": [],
+            "tick": [],
+            "exit": []
+        }
+    ],
+    "transitions": [
+        {
+            "from": "Idle",
+            "to": "Move",
+            "condition": {
+                "type": "VARIABLE",
+                "name": "distanceToPlayer",
+                "operator": "<",
+                "value": "5"
+            }
+        },
+        {
+            "from": "Move",
+            "to": "Attack",
+            "condition": null
+        }
+    ]
+}
