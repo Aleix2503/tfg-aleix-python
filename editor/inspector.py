@@ -1,13 +1,15 @@
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QListWidget,
     QPushButton, QHBoxLayout, QInputDialog, QTableWidget, 
-    QTableWidgetItem, QLineEdit, QComboBox
+    QTableWidgetItem, QLineEdit, QComboBox, QCompleter
 )
+from PySide6.QtCore import Qt
 
 from editor.node_item import StateNode
 from editor.edge_item import TransitionEdge
 from model.action import Action
 from model.condition import VariableCondition
+from data.action_registry import ALL_ACTIONS
 
 
 class Inspector(QWidget):
@@ -58,6 +60,29 @@ class Inspector(QWidget):
         exit_buttons.addWidget(self.exit_add)
         exit_buttons.addWidget(self.exit_remove)
         self.layout.addLayout(exit_buttons)
+
+
+        # ─────────────────────────────────────
+        # ACTION NAME (con autocompletado)
+        # ─────────────────────────────────────
+
+        self.layout.addWidget(QLabel("Action Name"))
+
+        self.action_name_input = QLineEdit()
+        self.layout.addWidget(self.action_name_input)
+
+        # Completer
+        self.completer = QCompleter(ALL_ACTIONS)
+        self.completer.setCaseSensitivity(Qt.CaseInsensitive)
+        self.completer.setFilterMode(Qt.MatchContains)
+
+        self.action_name_input.setCompleter(self.completer)
+
+        self.action_save = QPushButton("Save Action")
+        self.layout.addWidget(self.action_save)
+
+        self.action_save.clicked.connect(self.save_action_name)
+
 
         # ─────────────────────────────────────
         # PARÁMETROS
@@ -186,14 +211,7 @@ class Inspector(QWidget):
         if not self.current_state:
             return
 
-        name, ok = QInputDialog.getText(
-            self, "Nueva acción", "Nombre de la acción:"
-        )
-
-        if not ok or not name:
-            return
-
-        action = Action(name)
+        action = Action("NewAction")
 
         action_list = getattr(self.current_state, phase)
         action_list.append(action)
@@ -224,11 +242,26 @@ class Inspector(QWidget):
         index = getattr(self, f"{phase}_list").row(item)
         self.current_action = getattr(self.current_state, phase)[index]
 
+        # Mostrar nombre en el input
+        self.action_name_input.setText(self.current_action.name)
+
         self.show_action_params()
 
     def refresh(self):
         if self.current_node:
             self.inspect_state(self.current_node)
+
+    def save_action_name(self):
+        if not self.current_action:
+            return
+
+        name = self.action_name_input.text().strip()
+
+        if not name:
+            return
+
+        self.current_action.name = name
+        self.refresh()
 
     # ─────────────────────────────────────
     # PARÁMETROS
