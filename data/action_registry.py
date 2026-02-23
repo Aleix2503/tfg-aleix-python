@@ -1,69 +1,74 @@
-ACTION_CATEGORIES = {
-    "Animation": [
-        "PlayAnimation",
-        "CrossFadeAnimation",
-        "StopAnimation",
-        "SetAnimatorBool",
-        "SetAnimatorTrigger",
-        "SetAnimatorFloat",
-        "SetAnimatorInt",
-        "ResetAnimatorTrigger",
-    ],
-    "Movement": [
-        "MoveToPosition",
-        "MoveForward",
-        "MoveBackward",
-        "RotateToTarget",
-        "SetSpeed",
-        "StopMovement",
-        "Jump",
-        "Dash",
-        "AddForce",
-        "Teleport",
-        "LookAtTarget",
-    ],
-    "AI/Decisions": [
-        "SetTarget",
-        "ClearTarget",
-        "ChangeAggroState",
-        "SetPatrolPoint",
-        "NextPatrolPoint",
-        "FleeFromTarget",
-        "ChaseTarget",
-        "StopChasing",
-    ],
-    "Combat": [
-        "Attack",
-        "EnableHitbox",
-        "DisableHitbox",
-        "TakeDamage",
-        "Heal",
-        "SpawnProjectile",
-    ],
-    "Audio": [
-        "PlaySound",
-        "StopSound",
-        "PlayOneShot",
-        "SetVolume",
-    ],
-    "Variables": [
-        "SetBool",
-        "SetInt",
-        "SetFloat",
-        "IncrementInt",
-        "ToggleBool",
-    ],
-    "VFX": [
-        "SpawnVFX",
-        "DestroyVFX",
-        "ChangeColor",
-        "ShakeCamera",
-    ],
+# data/action_registry.py
+
+ACTION_REGISTRY = {
+    "Animation": {
+        "PlayAnimation": {
+            "animationName": "string",
+            "speed": "float"
+        },
+        "CrossFadeAnimation": {
+            "animationName": "string",
+            "duration": "float"
+        },
+        "SetAnimatorBool": {
+            "parameter": "string",
+            "value": "bool"
+        },
+        "SetAnimatorTrigger": {
+            "parameter": "string"
+        },
+    },
+
+    "Movement": {
+        "MoveToPosition": {
+            "x": "float",
+            "y": "float",
+            "z": "float"
+        },
+        "SetSpeed": {
+            "speed": "float"
+        },
+        "Jump": {
+            "force": "float"
+        },
+        "Teleport": {
+            "x": "float",
+            "y": "float",
+            "z": "float"
+        }
+    },
+
+    "Combat": {
+        "Attack": {
+            "damage": "int"
+        },
+        "TakeDamage": {
+            "amount": "int"
+        },
+        "Heal": {
+            "amount": "int"
+        }
+    },
+
+    "Variables": {
+        "SetBool": {
+            "variableName": "string",
+            "value": "bool"
+        },
+        "SetInt": {
+            "variableName": "string",
+            "value": "int"
+        },
+        "SetFloat": {
+            "variableName": "string",
+            "value": "float"
+        }
+    }
 }
 
-
+# Lista plana para autocompletado
 ALL_ACTIONS = [
     action
-    for category in ACTION_CATEGORIES.values()
-    for action in category
+    for category in ACTION_REGISTRY.values()
+    for action in category.keys()
 ]

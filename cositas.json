@@ -5,42 +5,22 @@
     "states": [
         {
             "id": "Idle",
-            "enter": [
-                {
-                    "action": "PlayAnim",
-                    "params": {
-                        "Name": "Idle"
-                    }
-                }
-            ],
-            "tick": [
-                {
-                    "action": "Move",
-                    "params": {
-                        "Speed": "3"
-                    }
-                }
-            ],
+            "enter": [],
+            "tick": [],
             "exit": []
         },
         {
             "id": "Move",
             "enter": [
                 {
-                    "action": "PlayAnim",
+                    "action": "PlayAnimation",
                     "params": {
-                        "Name": "Move"
+                        "animationName": "Move",
+                        "speed": "1"
                     }
                 }
             ],
-            "tick": [
-                {
-                    "action": "Move",
-                    "params": {
-                        "Speed": "8"
-                    }
-                }
-            ],
+            "tick": [],
             "exit": []
         },
         {
@@ -50,21 +30,5 @@
             "exit": []
         }
     ],
-    "transitions": [
-        {
-            "from": "Idle",
-            "to": "Move",
-            "condition": {
-                "type": "VARIABLE",
-                "name": "distanceToPlayer",
-                "operator": "<",
-                "value": "5"
-            }
-        },
-        {
-            "from": "Move",
-            "to": "Attack",
-            "condition": null
-        }
-    ]
+    "transitions": []
 }

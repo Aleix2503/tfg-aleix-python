@@ -1,7 +1,8 @@
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QListWidget,
-    QPushButton, QHBoxLayout, QInputDialog, QTableWidget, 
-    QTableWidgetItem, QLineEdit, QComboBox, QCompleter
+    QPushButton, QHBoxLayout, QTableWidget, QSpinBox,
+    QTableWidgetItem, QLineEdit, QComboBox, QCompleter,
+    QDoubleSpinBox, QCheckBox
 )
 from PySide6.QtCore import Qt
 
@@ -9,7 +10,7 @@ from editor.node_item import StateNode
 from editor.edge_item import TransitionEdge
 from model.action import Action
 from model.condition import VariableCondition
-from data.action_registry import ALL_ACTIONS
+from data.action_registry import ACTION_REGISTRY, ALL_ACTIONS
 
 
 class Inspector(QWidget):
@@ -90,13 +91,14 @@ class Inspector(QWidget):
 
         self.layout.addWidget(QLabel("Action Parameters"))
 
-        self.params_table = QTableWidget(0, 2)
-        self.params_table.setHorizontalHeaderLabels(["Key", "Value"])
-        self.layout.addWidget(self.params_table)
+        self.params_layout = QVBoxLayout()
+        self.layout.addLayout(self.params_layout)
 
-        self.param_add = QPushButton("+ Param")
-        self.param_remove = QPushButton("- Param")
-        self.layout.addLayout(self._row(self.param_add, self.param_remove))
+        self.param_widgets = {}
+
+        # self.param_add = QPushButton("+ Param")
+        # self.param_remove = QPushButton("- Param")
+        # self.layout.addLayout(self._row(self.param_add, self.param_remove))
 
         # ─────────────────────────────────────
         # CONEXIONES
@@ -119,9 +121,9 @@ class Inspector(QWidget):
             lambda item: self.select_action("exit", item)
         )
 
-        self.param_add.clicked.connect(self.add_param)
-        self.param_remove.clicked.connect(self.remove_param)
-        self.params_table.itemChanged.connect(self.on_param_changed)
+        # self.param_add.clicked.connect(self.add_param)
+        # self.param_remove.clicked.connect(self.remove_param)
+        # self.params_table.itemChanged.connect(self.on_param_changed)
 
         # ─────────────────────────────────────
         # CONDICIÓN DE TRANSICIÓN
@@ -174,7 +176,7 @@ class Inspector(QWidget):
         self.tick_list.clear()
         self.exit_list.clear()
         self.current_action = None
-        self.params_table.setRowCount(0)
+        # self.params_table.setRowCount(0)
 
 
     def inspect(self, item):
@@ -235,17 +237,24 @@ class Inspector(QWidget):
             return
 
         actions.pop(row)
-        self.params_table.setRowCount(0)
+        # self.params_table.setRowCount(0)
         self.refresh()
 
     def select_action(self, phase, item):
         index = getattr(self, f"{phase}_list").row(item)
         self.current_action = getattr(self.current_state, phase)[index]
 
-        # Mostrar nombre en el input
-        self.action_name_input.setText(self.current_action.name)
+        if not self.current_action:
+            self.clear_layout(self.params_layout)
+            return
 
-        self.show_action_params()
+        # Mostrar nombre en el input
+        self.action_name_input.blockSignals(True)
+        self.action_name_input.setText(self.current_action.name)
+        self.action_name_input.blockSignals(False)
+
+        # 🔥 Regenerar UI dinámica
+        self.generate_params_for_action(self.current_action.name)
 
     def refresh(self):
         if self.current_node:
@@ -261,64 +270,143 @@ class Inspector(QWidget):
             return
 
         self.current_action.name = name
+
+        # Generar widgets tipados
+        self.generate_params_for_action(name)
+
         self.refresh()
 
     # ─────────────────────────────────────
     # PARÁMETROS
     # ─────────────────────────────────────
 
-    def show_action_params(self):
-        self.params_table.blockSignals(True)
-        self.params_table.setRowCount(0)
+    # def show_action_params(self):
+    #     self.params_table.blockSignals(True)
+    #     self.params_table.setRowCount(0)
 
-        if not self.current_action:
-            self.params_table.blockSignals(False)
-            return
+    #     if not self.current_action:
+    #         self.params_table.blockSignals(False)
+    #         return
 
-        for k, v in self.current_action.params.items():
-            row = self.params_table.rowCount()
-            self.params_table.insertRow(row)
-            self.params_table.setItem(row, 0, QTableWidgetItem(k))
-            self.params_table.setItem(row, 1, QTableWidgetItem(str(v)))
+    #     for k, v in self.current_action.params.items():
+    #         row = self.params_table.rowCount()
+    #         self.params_table.insertRow(row)
+    #         self.params_table.setItem(row, 0, QTableWidgetItem(k))
+    #         self.params_table.setItem(row, 1, QTableWidgetItem(str(v)))
 
-        self.params_table.blockSignals(False)
+    #     self.params_table.blockSignals(False)
 
-    def add_param(self):
-        if not self.current_action:
-            return
+    # def add_param(self):
+    #     if not self.current_action:
+    #         return
 
-        self.params_table.blockSignals(True)
+    #     self.params_table.blockSignals(True)
 
-        row = self.params_table.rowCount()
-        self.params_table.insertRow(row)
-        self.params_table.setItem(row, 0, QTableWidgetItem("key"))
-        self.params_table.setItem(row, 1, QTableWidgetItem("value"))
+    #     row = self.params_table.rowCount()
+    #     self.params_table.insertRow(row)
+    #     self.params_table.setItem(row, 0, QTableWidgetItem("key"))
+    #     self.params_table.setItem(row, 1, QTableWidgetItem("value"))
 
-        self.params_table.blockSignals(False)
+    #     self.params_table.blockSignals(False)
 
-        self._sync_params_from_table()
+    #     self._sync_params_from_table()
 
-    def remove_param(self):
-        row = self.params_table.currentRow()
-        if row < 0:
-            return
+    # def remove_param(self):
+    #     row = self.params_table.currentRow()
+    #     if row < 0:
+    #         return
 
-        self.params_table.removeRow(row)
-        self._sync_params_from_table()
+    #     self.params_table.removeRow(row)
+    #     self._sync_params_from_table()
 
     def on_param_changed(self, _):
         self._sync_params_from_table()
 
-    def _sync_params_from_table(self):
+    # def _sync_params_from_table(self):
+    #     if not self.current_action:
+    #         return
+
+    #     self.current_action.params = {
+    #         self.params_table.item(r, 0).text():
+    #         self.params_table.item(r, 1).text()
+    #         for r in range(self.params_table.rowCount())
+    #         if self.params_table.item(r, 0)
+    #     }
+
+    def generate_params_for_action(self, action_name):
+        # Limpiar layout anterior
+        self.clear_layout(self.params_layout)
+
+        self.param_widgets = {}
+
+        # Buscar acción
+        for category in ACTION_REGISTRY.values():
+            if action_name in category:
+                params = category[action_name]
+
+                for param_name, param_type in params.items():
+                    row = QHBoxLayout()
+                    label = QLabel(param_name)
+                    row.addWidget(label)
+
+                    # Crear widget según tipo
+                    if param_type == "int":
+                        widget = QSpinBox()
+                        widget.setRange(-999999, 999999)
+                        widget.valueChanged.connect(self.sync_params_from_widgets)
+
+                    elif param_type == "float":
+                        widget = QDoubleSpinBox()
+                        widget.setRange(-999999.0, 999999.0)
+                        widget.setDecimals(3)
+                        widget.valueChanged.connect(self.sync_params_from_widgets)
+
+                    elif param_type == "bool":
+                        widget = QCheckBox()
+                        widget.stateChanged.connect(self.sync_params_from_widgets)
+
+                    else:  # string por defecto
+                        widget = QLineEdit()
+                        widget.textChanged.connect(self.sync_params_from_widgets)
+
+                    row.addWidget(widget)
+                    self.params_layout.addLayout(row)
+
+                    self.param_widgets[param_name] = widget
+
+                break
+
+    def sync_params_from_widgets(self):
         if not self.current_action:
             return
 
-        self.current_action.params = {
-            self.params_table.item(r, 0).text():
-            self.params_table.item(r, 1).text()
-            for r in range(self.params_table.rowCount())
-            if self.params_table.item(r, 0)
-        }
+        params = {}
+
+        for name, widget in self.param_widgets.items():
+
+            if isinstance(widget, QSpinBox):
+                params[name] = widget.value()
+
+            elif isinstance(widget, QDoubleSpinBox):
+                params[name] = widget.value()
+
+            elif isinstance(widget, QCheckBox):
+                params[name] = widget.isChecked()
+
+            elif isinstance(widget, QLineEdit):
+                params[name] = widget.text()
+
+        self.current_action.params = params
+
+    def clear_layout(self, layout):
+        while layout.count():
+            item = layout.takeAt(0)
+
+            if item.widget():
+                item.widget().deleteLater()
+
+            elif item.layout():
+                self.clear_layout(item.layout())
 
     # ─────────────────────────────────────
     # TRANSICIÓN
