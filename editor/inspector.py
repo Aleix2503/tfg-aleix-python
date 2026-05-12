@@ -26,6 +26,16 @@ class Inspector(QWidget):
         self.title = QLabel("Inspector")
         self.layout.addWidget(self.title)
 
+        # --- STATE NAME ---
+        self.state_name_label = QLabel("State Name")
+        self.layout.addWidget(self.state_name_label)
+        self.state_name_input = QLineEdit()
+        self.state_name_input.setPlaceholderText("Enter state name")
+        self.layout.addWidget(self.state_name_input)
+        self.state_name_input.textChanged.connect(self.on_state_name_changed)
+        self.state_name_label.hide()
+        self.state_name_input.hide()
+
         # --- ENTER ---
         self.layout.addWidget(QLabel("Enter"))
         self.enter_list = QListWidget()
@@ -176,6 +186,9 @@ class Inspector(QWidget):
         self.tick_list.clear()
         self.exit_list.clear()
         self.current_action = None
+        self.state_name_input.clear()
+        self.state_name_label.hide()
+        self.state_name_input.hide()
         # self.params_table.setRowCount(0)
 
 
@@ -194,6 +207,13 @@ class Inspector(QWidget):
 
         self.title.setText(f"State: {node.state.id}")
 
+        # Mostrar campo de nombre
+        self.state_name_label.show()
+        self.state_name_input.show()
+        self.state_name_input.blockSignals(True)
+        self.state_name_input.setText(node.state.id)
+        self.state_name_input.blockSignals(False)
+
         self.enter_list.clear()
         self.tick_list.clear()
         self.exit_list.clear()
@@ -204,6 +224,24 @@ class Inspector(QWidget):
             self.tick_list.addItem(str(a))
         for a in node.state.exit:
             self.exit_list.addItem(str(a))
+
+    def on_state_name_changed(self):
+        if not self.current_state or not self.current_node:
+            return
+
+        new_name = self.state_name_input.text().strip()
+
+        if not new_name:
+            return
+
+        # Actualizar el estado
+        self.current_state.id = new_name
+
+        # Actualizar el nodo visual
+        self.current_node.text.setPlainText(new_name)
+
+        # Actualizar el título
+        self.title.setText(f"State: {new_name}")
 
     # ------------------------
     # ACCIONES

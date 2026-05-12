@@ -1,34 +1,42 @@
 {
     "version": "1.0",
-    "name": "TestFSM",
-    "initial_state": "Idle",
+    "name": "FSM",
+    "initial_state": "State_1",
     "states": [
         {
-            "id": "Idle",
+            "id": "State_1",
             "enter": [],
             "tick": [],
             "exit": []
         },
         {
-            "id": "Move",
-            "enter": [
-                {
-                    "action": "PlayAnimation",
-                    "params": {
-                        "animationName": "Move",
-                        "speed": "1"
-                    }
-                }
-            ],
+            "id": "State_3",
+            "enter": [],
             "tick": [],
             "exit": []
         },
         {
-            "id": "Attack",
+            "id": "State_2",
             "enter": [],
             "tick": [],
             "exit": []
         }
     ],
-    "transitions": []
+    "transitions": [
+        {
+            "from": "State_3",
+            "to": "State_1",
+            "condition": null
+        },
+        {
+            "from": "State_1",
+            "to": "State_3",
+            "condition": null
+        },
+        {
+            "from": "State_3",
+            "to": "State_2",
+            "condition": null
+        }
+    ]
 }

@@ -1,0 +1,42 @@
+{
+    "project_version": "1.0",
+    "fsm": {
+        "version": "1.0",
+        "name": "NewFSM",
+        "initial_state": "State_1",
+        "states": [
+            {
+                "id": "State_1",
+                "enter": [],
+                "tick": [],
+                "exit": []
+            },
+            {
+                "id": "State_2",
+                "enter": [],
+                "tick": [],
+                "exit": []
+            }
+        ],
+        "transitions": [
+            {
+                "from": "State_2",
+                "to": "State_1",
+                "condition": null
+            }
+        ]
+    },
+    "editor": {
+        "nodes": {
+            "State_2": {
+                "x": -256.0,
+                "y": -207.0
+            },
+            "State_1": {
+                "x": -642.0,
+                "y": -154.0
+            }
+        },
+        "zoom": 1.0
+    }
+}

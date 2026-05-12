@@ -1,0 +1,62 @@
+{
+    "project_version": "1.0",
+    "fsm": {
+        "version": "1.0",
+        "name": "FSM",
+        "initial_state": "State_1",
+        "states": [
+            {
+                "id": "State_1",
+                "enter": [],
+                "tick": [],
+                "exit": []
+            },
+            {
+                "id": "State_3",
+                "enter": [],
+                "tick": [],
+                "exit": []
+            },
+            {
+                "id": "State_2",
+                "enter": [],
+                "tick": [],
+                "exit": []
+            }
+        ],
+        "transitions": [
+            {
+                "from": "State_3",
+                "to": "State_1",
+                "condition": null
+            },
+            {
+                "from": "State_1",
+                "to": "State_3",
+                "condition": null
+            },
+            {
+                "from": "State_3",
+                "to": "State_2",
+                "condition": null
+            }
+        ]
+    },
+    "editor": {
+        "nodes": {
+            "State_2": {
+                "x": -340.0,
+                "y": -227.0
+            },
+            "State_3": {
+                "x": -221.0,
+                "y": 6.0
+            },
+            "State_1": {
+                "x": -650.0,
+                "y": -175.0
+            }
+        },
+        "zoom": 1.0
+    }
+}
