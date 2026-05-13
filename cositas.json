@@ -10,12 +10,6 @@
             "exit": []
         },
         {
-            "id": "State_3",
-            "enter": [],
-            "tick": [],
-            "exit": []
-        },
-        {
             "id": "State_2",
             "enter": [],
             "tick": [],
@@ -24,19 +18,22 @@
     ],
     "transitions": [
         {
-            "from": "State_3",
+            "from": "State_2",
             "to": "State_1",
-            "condition": null
-        },
-        {
-            "from": "State_1",
-            "to": "State_3",
-            "condition": null
-        },
-        {
-            "from": "State_3",
-            "to": "State_2",
-            "condition": null
+            "conditions": [
+                {
+                    "type": "VARIABLE",
+                    "name": "Patata",
+                    "operator": "<",
+                    "value": "2444"
+                },
+                {
+                    "type": "VARIABLE",
+                    "name": "pluma",
+                    "operator": "==",
+                    "value": "234"
+                }
+            ]
         }
     ]
 }

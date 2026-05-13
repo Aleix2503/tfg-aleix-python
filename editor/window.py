@@ -58,6 +58,7 @@ class MainWindow(QMainWindow):
 
         #Layout principal
         layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
         central.setLayout(layout)
 
         #Layout secundario para botón de exportar
@@ -70,6 +71,7 @@ class MainWindow(QMainWindow):
         )
 
         v_layout.addWidget(self.graph, 3)
+        v_layout.addStretch()
 
         layout.addLayout(v_layout, 3)
         layout.addWidget(self.inspector, 1)

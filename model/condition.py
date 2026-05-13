@@ -29,4 +29,15 @@ class LogicalCondition(Condition):
             "type": self.type,
             "conditions": [c.to_dict() for c in self.conditions]
         }
+    
+class GenericCondition(Condition):
+    def __init__(self, condition_type, params=None):
+        self.type = condition_type
+        self.params = params or {}
+
+    def to_dict(self):
+        return {
+            "type": self.type,
+            "params": self.params
+        }
 
