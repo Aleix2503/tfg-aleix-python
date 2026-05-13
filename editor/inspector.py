@@ -2,14 +2,15 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QListWidget,
     QPushButton, QHBoxLayout, QTableWidget, QSpinBox,
     QTableWidgetItem, QLineEdit, QComboBox, QCompleter,
-    QDoubleSpinBox, QCheckBox, QScrollArea
+    QDoubleSpinBox, QCheckBox, QScrollArea, QTreeWidget, QTreeWidgetItem
 )
 from PySide6.QtCore import Qt
 
 from editor.node_item import StateNode
 from editor.edge_item import TransitionEdge
 from model.action import Action
-from model.condition import VariableCondition
+from model.condition import GenericCondition, LogicalCondition
+from data.condition_registry import CONDITION_REGISTRY, ALL_CONDITIONS
 from data.action_registry import ACTION_REGISTRY, ALL_ACTIONS
 
 
@@ -180,55 +181,64 @@ class Inspector(QWidget):
         # SECCIÓN: TRANSICIÓN (TRANSITION)
         # ─────────────────────────────────────
 
-        self.cond_label = QLabel("Transition Conditions")
+        self.cond_label = QLabel("Transition Condition Tree")
         self.layout.addWidget(self.cond_label)
         self.transition_widgets.append(self.cond_label)
 
-        # Lista de condiciones
-        self.conditions_list = QListWidget()
-        self.conditions_list.setMinimumHeight(100)
-        self.conditions_list.setMaximumHeight(100)
-        self.layout.addWidget(self.conditions_list)
-        self.transition_widgets.append(self.conditions_list)
-        
-        # Botones para gestionar condiciones
-        cond_list_buttons = QHBoxLayout()
-        self.cond_add_btn = QPushButton("+ Condition")
-        self.cond_remove_btn = QPushButton("- Condition")
-        cond_list_buttons.addWidget(self.cond_add_btn)
-        cond_list_buttons.addWidget(self.cond_remove_btn)
-        self.layout.addLayout(cond_list_buttons)
-        self.transition_widgets.append(cond_list_buttons)
+        self.condition_tree = QTreeWidget()
+        self.condition_tree.setHeaderLabels(["Condition"])
+        self.condition_tree.setMinimumHeight(180)
+        self.layout.addWidget(self.condition_tree)
+        self.transition_widgets.append(self.condition_tree)
 
-        # Formulario para editar condición seleccionada
-        self.cond_edit_label = QLabel("Edit Condition")
+        condition_buttons = QHBoxLayout()
+
+        self.set_root_simple_btn = QPushButton("Root Simple")
+        self.set_root_and_btn = QPushButton("Root AND")
+        self.set_root_or_btn = QPushButton("Root OR")
+        self.set_root_not_btn = QPushButton("Root NOT")
+
+        condition_buttons.addWidget(self.set_root_simple_btn)
+        condition_buttons.addWidget(self.set_root_and_btn)
+        condition_buttons.addWidget(self.set_root_or_btn)
+        condition_buttons.addWidget(self.set_root_not_btn)
+
+        self.layout.addLayout(condition_buttons)
+        self.transition_widgets.append(condition_buttons)
+
+        child_buttons = QHBoxLayout()
+
+        self.add_simple_child_btn = QPushButton("+ Simple Child")
+        self.add_and_child_btn = QPushButton("+ AND Child")
+        self.add_or_child_btn = QPushButton("+ OR Child")
+        self.remove_condition_btn = QPushButton("- Remove")
+
+        child_buttons.addWidget(self.add_simple_child_btn)
+        child_buttons.addWidget(self.add_and_child_btn)
+        child_buttons.addWidget(self.add_or_child_btn)
+        child_buttons.addWidget(self.remove_condition_btn)
+
+        self.layout.addLayout(child_buttons)
+        self.transition_widgets.append(child_buttons)
+
+        self.cond_edit_label = QLabel("Edit Simple Condition")
         self.layout.addWidget(self.cond_edit_label)
         self.transition_widgets.append(self.cond_edit_label)
 
         self.cond_type = QComboBox()
-        self.cond_type.addItems(["VARIABLE"])
+        self.cond_type.addItems(ALL_CONDITIONS)
         self.layout.addWidget(self.cond_type)
         self.transition_widgets.append(self.cond_type)
 
-        self.cond_var = QLineEdit()
-        self.cond_var.setPlaceholderText("Variable name")
-        self.layout.addWidget(self.cond_var)
-        self.transition_widgets.append(self.cond_var)
+        self.condition_params_layout = QVBoxLayout()
+        self.layout.addLayout(self.condition_params_layout)
+        self.transition_widgets.append(self.condition_params_layout)
 
-        self.cond_op = QComboBox()
-        self.cond_op.addItems(["==", "!=", "<", ">", "<=", ">="])
-        self.layout.addWidget(self.cond_op)
-        self.transition_widgets.append(self.cond_op)
-
-        self.cond_value = QLineEdit()
-        self.cond_value.setPlaceholderText("Value")
-        self.layout.addWidget(self.cond_value)
-        self.transition_widgets.append(self.cond_value)
-
-        self.cond_save = QPushButton("Save Condition")
+        self.cond_save = QPushButton("Save Simple Condition")
         self.layout.addWidget(self.cond_save)
-        self.cond_save.clicked.connect(self.save_transition_condition)
         self.transition_widgets.append(self.cond_save)
+
+        self.condition_param_widgets = {}
         
         # Agregar stretch al final para que el contenido no se expanda
         self.layout.addStretch()
@@ -239,9 +249,22 @@ class Inspector(QWidget):
         # ─────────────────────────────────────
         # CONEXIONES (al final del __init__)
         # ─────────────────────────────────────
-        self.cond_add_btn.clicked.connect(self.add_transition_condition)
-        self.cond_remove_btn.clicked.connect(self.remove_transition_condition)
-        self.conditions_list.itemClicked.connect(self.select_transition_condition)
+
+        self.set_root_simple_btn.clicked.connect(self.set_root_simple_condition)
+        self.set_root_and_btn.clicked.connect(lambda: self.set_root_logical_condition("AND"))
+        self.set_root_or_btn.clicked.connect(lambda: self.set_root_logical_condition("OR"))
+        self.set_root_not_btn.clicked.connect(lambda: self.set_root_logical_condition("NOT"))
+
+        self.add_simple_child_btn.clicked.connect(self.add_simple_child_condition)
+        self.add_and_child_btn.clicked.connect(lambda: self.add_logical_child_condition("AND"))
+        self.add_or_child_btn.clicked.connect(lambda: self.add_logical_child_condition("OR"))
+
+        self.remove_condition_btn.clicked.connect(self.remove_selected_condition)
+        self.condition_tree.itemClicked.connect(self.select_condition_tree_item)
+
+        self.cond_type.currentTextChanged.connect(self.generate_params_for_condition)
+        self.cond_save.clicked.connect(self.save_simple_condition)
+
         
         self.enter_add.clicked.connect(lambda: self.add_action("enter"))
         self.enter_remove.clicked.connect(lambda: self.remove_action("enter"))
@@ -261,59 +284,54 @@ class Inspector(QWidget):
         )
 
     def _hide_all_sections(self):
-        """Oculta todas las secciones del inspector"""
         for widget in self.state_widgets:
-            if isinstance(widget, QHBoxLayout) or isinstance(widget, QVBoxLayout):
+            if isinstance(widget, (QHBoxLayout, QVBoxLayout)):
                 for i in range(widget.count()):
                     item = widget.itemAt(i)
                     if item.widget():
                         item.widget().hide()
-            elif isinstance(widget, QLabel) or isinstance(widget, QLineEdit) or \
-                 isinstance(widget, QListWidget) or isinstance(widget, QPushButton) or \
-                 isinstance(widget, QComboBox):
+            elif hasattr(widget, "hide"):
                 widget.hide()
-        
+
         for widget in self.transition_widgets:
-            if isinstance(widget, QHBoxLayout) or isinstance(widget, QVBoxLayout):
+            if isinstance(widget, (QHBoxLayout, QVBoxLayout)):
                 for i in range(widget.count()):
                     item = widget.itemAt(i)
                     if item.widget():
                         item.widget().hide()
-            elif isinstance(widget, QLabel) or isinstance(widget, QLineEdit) or \
-                 isinstance(widget, QListWidget) or isinstance(widget, QPushButton) or \
-                 isinstance(widget, QComboBox):
+            elif hasattr(widget, "hide"):
                 widget.hide()
-        
+
         self.title.hide()
 
     def _show_state_section(self):
         """Muestra la sección de estado"""
+
         self._hide_all_sections()
         self.title.show()
+
         for widget in self.state_widgets:
-            if isinstance(widget, QHBoxLayout) or isinstance(widget, QVBoxLayout):
+            if isinstance(widget, (QHBoxLayout, QVBoxLayout)):
                 for i in range(widget.count()):
                     item = widget.itemAt(i)
                     if item.widget():
                         item.widget().show()
-            elif isinstance(widget, QLabel) or isinstance(widget, QLineEdit) or \
-                 isinstance(widget, QListWidget) or isinstance(widget, QPushButton) or \
-                 isinstance(widget, QComboBox):
+            elif hasattr(widget, "show"):
                 widget.show()
 
     def _show_transition_section(self):
         """Muestra la sección de transición"""
+
         self._hide_all_sections()
         self.title.show()
+
         for widget in self.transition_widgets:
-            if isinstance(widget, QHBoxLayout) or isinstance(widget, QVBoxLayout):
+            if isinstance(widget, (QHBoxLayout, QVBoxLayout)):
                 for i in range(widget.count()):
                     item = widget.itemAt(i)
                     if item.widget():
                         item.widget().show()
-            elif isinstance(widget, QLabel) or isinstance(widget, QLineEdit) or \
-                 isinstance(widget, QListWidget) or isinstance(widget, QPushButton) or \
-                 isinstance(widget, QComboBox):
+            elif hasattr(widget, "show"):
                 widget.show()
 
     def _hide_action_params(self):
@@ -345,12 +363,6 @@ class Inspector(QWidget):
     # UTIL
     # ─────────────────────────────────────
 
-    def _row(self, *widgets):
-        row = QHBoxLayout()
-        for w in widgets:
-            row.addWidget(w)
-        return row
-    
     # ─────────────────────────────────────
     # ESTADO
     # ─────────────────────────────────────
@@ -366,10 +378,10 @@ class Inspector(QWidget):
         self.exit_list.clear()
         self.state_name_input.clear()
         self.action_name_input.clear()
-        self.conditions_list.clear()
-        self.cond_var.clear()
-        self.cond_value.clear()
-        self.cond_op.setCurrentIndex(0)
+        self.condition_tree.clear()
+        self.cond_type.setCurrentIndex(0)
+        self.clear_layout(self.condition_params_layout)
+        self.condition_param_widgets = {}
         self.params_table.setRowCount(0)
         self.clear_layout(self.params_layout)
         self._hide_action_params()
@@ -510,9 +522,6 @@ class Inspector(QWidget):
     # ─────────────────────────────────────
     # PARÁMETROS
     # ─────────────────────────────────────
-
-    def on_param_changed(self, _):
-        self._sync_params_from_table()
 
     def generate_params_for_action(self, action_name):
         # Limpiar layout anterior
@@ -655,6 +664,252 @@ class Inspector(QWidget):
     # ─────────────────────────────────────
     # TRANSICIÓN
     # ─────────────────────────────────────
+
+    def refresh_condition_tree(self):
+        self.condition_tree.clear()
+
+        if not self.current_transition or not self.current_transition.condition:
+            return
+
+        root_item = self.create_tree_item_from_condition(
+            self.current_transition.condition,
+            None
+        )
+
+        self.condition_tree.addTopLevelItem(root_item)
+        self.condition_tree.expandAll()
+
+    def create_tree_item_from_condition(self, condition, parent_condition):
+        item = QTreeWidgetItem()
+        item.setText(0, self.condition_to_text(condition))
+
+        item.condition_ref = condition
+        item.parent_condition_ref = parent_condition
+
+        if isinstance(condition, LogicalCondition):
+            for child in condition.conditions:
+                child_item = self.create_tree_item_from_condition(child, condition)
+                item.addChild(child_item)
+
+        return item
+
+    def condition_to_text(self, condition):
+        if isinstance(condition, LogicalCondition):
+            return condition.type
+
+        if isinstance(condition, GenericCondition):
+            return f"{condition.type} {condition.params}"
+
+        return "UnknownCondition"
+    
+    def set_root_simple_condition(self):
+        if not self.current_transition:
+            return
+
+        condition_type = self.cond_type.currentText()
+        self.current_transition.condition = GenericCondition(condition_type, {})
+
+        self.current_condition = self.current_transition.condition
+
+        self.generate_params_for_condition(condition_type)
+        self.refresh_condition_tree()
+
+    def set_root_logical_condition(self, op):
+        if not self.current_transition:
+            return
+
+        self.current_transition.condition = LogicalCondition(op, [])
+        self.current_condition = self.current_transition.condition
+
+        self.clear_layout(self.condition_params_layout)
+        self.condition_param_widgets = {}
+
+        self.refresh_condition_tree()
+
+    def get_selected_condition_item(self):
+        selected = self.condition_tree.selectedItems()
+        if not selected:
+            return None
+
+        return selected[0]
+
+    def add_simple_child_condition(self):
+        item = self.get_selected_condition_item()
+
+        if not item:
+            return
+
+        parent_condition = item.condition_ref
+
+        if not isinstance(parent_condition, LogicalCondition):
+            print("Only logical conditions can have children")
+            return
+
+        condition_type = self.cond_type.currentText()
+        new_condition = GenericCondition(condition_type, {})
+
+        parent_condition.conditions.append(new_condition)
+        self.current_condition = new_condition
+
+        self.generate_params_for_condition(condition_type)
+        self.refresh_condition_tree()
+
+    def add_logical_child_condition(self, op):
+        item = self.get_selected_condition_item()
+
+        if not item:
+            return
+
+        parent_condition = item.condition_ref
+
+        if not isinstance(parent_condition, LogicalCondition):
+            print("Only logical conditions can have children")
+            return
+
+        new_condition = LogicalCondition(op, [])
+        parent_condition.conditions.append(new_condition)
+        self.current_condition = new_condition
+
+        self.clear_layout(self.condition_params_layout)
+        self.condition_param_widgets = {}
+
+        self.refresh_condition_tree()
+
+    def select_condition_tree_item(self, item):
+        self.current_condition = item.condition_ref
+
+        if isinstance(self.current_condition, GenericCondition):
+            self.cond_type.blockSignals(True)
+            self.cond_type.setCurrentText(self.current_condition.type)
+            self.cond_type.blockSignals(False)
+
+            self.generate_params_for_condition(self.current_condition.type)
+            self.populate_condition_params()
+
+        else:
+            self.clear_layout(self.condition_params_layout)
+            self.condition_param_widgets = {}
+    
+    def generate_params_for_condition(self, condition_type):
+        self.clear_layout(self.condition_params_layout)
+        self.condition_param_widgets = {}
+
+        for category in CONDITION_REGISTRY.values():
+            if condition_type in category:
+                params = category[condition_type]
+
+                for param_name, param_type in params.items():
+                    row = QHBoxLayout()
+                    label = QLabel(param_name)
+                    row.addWidget(label)
+
+                    if param_type == "int":
+                        widget = QSpinBox()
+                        widget.setRange(-999999, 999999)
+
+                    elif param_type == "float":
+                        widget = QDoubleSpinBox()
+                        widget.setRange(-999999.0, 999999.0)
+                        widget.setDecimals(3)
+
+                    elif param_type == "bool":
+                        widget = QCheckBox()
+
+                    elif param_type == "operator":
+                        widget = QComboBox()
+                        widget.addItems(["==", "!=", "<", ">", "<=", ">="])
+
+                    else:
+                        widget = QLineEdit()
+
+                    row.addWidget(widget)
+                    self.condition_params_layout.addLayout(row)
+                    self.condition_param_widgets[param_name] = widget
+
+                break
+
+    def populate_condition_params(self):
+        if not isinstance(self.current_condition, GenericCondition):
+            return
+
+        params = self.current_condition.params
+
+        for name, widget in self.condition_param_widgets.items():
+            if name not in params:
+                continue
+
+            value = params[name]
+
+            if isinstance(widget, QSpinBox):
+                widget.setValue(int(value))
+
+            elif isinstance(widget, QDoubleSpinBox):
+                widget.setValue(float(value))
+
+            elif isinstance(widget, QCheckBox):
+                widget.setChecked(bool(value))
+
+            elif isinstance(widget, QComboBox):
+                widget.setCurrentText(str(value))
+
+            elif isinstance(widget, QLineEdit):
+                widget.setText(str(value))
+
+    def save_simple_condition(self):
+        if not isinstance(self.current_condition, GenericCondition):
+            return
+
+        condition_type = self.cond_type.currentText()
+        params = {}
+
+        for name, widget in self.condition_param_widgets.items():
+
+            if isinstance(widget, QSpinBox):
+                params[name] = widget.value()
+
+            elif isinstance(widget, QDoubleSpinBox):
+                params[name] = widget.value()
+
+            elif isinstance(widget, QCheckBox):
+                params[name] = widget.isChecked()
+
+            elif isinstance(widget, QComboBox):
+                params[name] = widget.currentText()
+
+            elif isinstance(widget, QLineEdit):
+                params[name] = widget.text()
+
+        self.current_condition.type = condition_type
+        self.current_condition.params = params
+
+        self.refresh_condition_tree()
+
+        print("Condition saved:", self.current_condition.to_dict())
+    
+    def remove_selected_condition(self):
+        item = self.get_selected_condition_item()
+
+        if not item or not self.current_transition:
+            return
+
+        condition = item.condition_ref
+        parent = item.parent_condition_ref
+
+        # Si es root
+        if parent is None:
+            self.current_transition.condition = None
+            self.current_condition = None
+            self.refresh_condition_tree()
+            return
+
+        # Si es hija
+        if isinstance(parent, LogicalCondition):
+            if condition in parent.conditions:
+                parent.conditions.remove(condition)
+
+        self.current_condition = None
+        self.refresh_condition_tree()
+
     def inspect_transition(self, edge):
         self.current_transition = edge.transition
         self.current_state = None
@@ -664,86 +919,6 @@ class Inspector(QWidget):
         self.title.setText(
             f"Transition: {edge.transition.from_state.id} → {edge.transition.to_state.id}"
         )
-        
-        # Mostrar sección de transición
+
         self._show_transition_section()
-
-        self.refresh_conditions_list()
-
-    def refresh_conditions_list(self):
-        """Recarga la lista de condiciones"""
-        self.conditions_list.clear()
-        self.cond_var.clear()
-        self.cond_value.clear()
-        self.cond_op.setCurrentIndex(0)
-        
-        if not self.current_transition:
-            return
-        
-        for i, cond in enumerate(self.current_transition.conditions):
-            display_text = f"{cond.name} {cond.operator} {cond.value}"
-            self.conditions_list.addItem(display_text)
-
-    def select_transition_condition(self, item):
-        """Selecciona una condición para editarla"""
-        row = self.conditions_list.row(item)
-        if row < 0 or row >= len(self.current_transition.conditions):
-            return
-        
-        self.current_condition = self.current_transition.conditions[row]
-        
-        # Llenar los campos con los datos de la condición
-        self.cond_var.setText(self.current_condition.name)
-        self.cond_op.setCurrentText(self.current_condition.operator)
-        self.cond_value.setText(str(self.current_condition.value))
-
-    def add_transition_condition(self):
-        """Agrega una nueva condición a la transición"""
-        if not self.current_transition:
-            return
-        
-        # Crear una condición vacía
-        new_condition = VariableCondition("", "==", "")
-        self.current_transition.conditions.append(new_condition)
-        self.current_condition = new_condition
-        
-        # Actualizar lista y campos
-        self.refresh_conditions_list()
-        row = len(self.current_transition.conditions) - 1
-        self.conditions_list.setCurrentRow(row)
-
-    def remove_transition_condition(self):
-        """Elimina la condición seleccionada"""
-        if not self.current_transition or not self.current_condition:
-            return
-        
-        row = self.conditions_list.currentRow()
-        if row < 0:
-            return
-        
-        self.current_transition.conditions.pop(row)
-        self.current_condition = None
-        self.refresh_conditions_list()
-
-    def show_transition_condition(self):
-        """Mostrar condición seleccionada (deprecated, usar refresh_conditions_list)"""
-        self.refresh_conditions_list()
-
-    def save_transition_condition(self):
-        """Guarda los cambios de la condición seleccionada"""
-        if not self.current_transition or not self.current_condition:
-            # Si no hay condición seleccionada, no se puede guardar
-            return
-
-        if not self.cond_var.text() or not self.cond_value.text():
-            return
-
-        # Actualizar la condición actual
-        self.current_condition.name = self.cond_var.text()
-        self.current_condition.operator = self.cond_op.currentText()
-        self.current_condition.value = self.cond_value.text()
-        
-        # Actualizar la lista
-        self.refresh_conditions_list()
-        
-        print("Condition saved:", self.current_condition.to_dict())
+        self.refresh_condition_tree()

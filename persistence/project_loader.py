@@ -2,7 +2,9 @@ import json
 
 from model.fsm import FSM
 from model.state import State
+from model.action import Action
 from model.transition import Transition
+from model.condition import condition_from_dict
 
 from editor.node_item import StateNode
 from editor.edge_item import TransitionEdge
@@ -27,6 +29,22 @@ def load_project(path, scene):
     for state_data in fsm_data["states"]:
 
         state = State(state_data["id"])
+
+        # Cargar acciones
+        for action_data in state_data.get("enter", []):
+            action = Action(action_data["action"])
+            action.params = action_data.get("params", {})
+            state.enter.append(action)
+
+        for action_data in state_data.get("tick", []):
+            action = Action(action_data["action"])
+            action.params = action_data.get("params", {})
+            state.tick.append(action)
+
+        for action_data in state_data.get("exit", []):
+            action = Action(action_data["action"])
+            action.params = action_data.get("params", {})
+            state.exit.append(action)
 
         fsm.add_state(state)
 
@@ -64,9 +82,14 @@ def load_project(path, scene):
         source_node = node_map[from_state]
         target_node = node_map[to_state]
 
+        # Deserializar condición
+        condition_data = transition_data.get("condition")
+        condition = condition_from_dict(condition_data) if condition_data else None
+
         transition = Transition(
             source_node.state,
-            target_node.state
+            target_node.state,
+            condition
         )
 
         fsm.add_transition(transition)

@@ -20,20 +20,40 @@
         {
             "from": "State_2",
             "to": "State_1",
-            "conditions": [
-                {
-                    "type": "VARIABLE",
-                    "name": "Patata",
-                    "operator": "<",
-                    "value": "2444"
-                },
-                {
-                    "type": "VARIABLE",
-                    "name": "pluma",
-                    "operator": "==",
-                    "value": "234"
-                }
-            ]
+            "condition": {
+                "type": "OR",
+                "conditions": [
+                    {
+                        "type": "VariableCompare",
+                        "params": {
+                            "variableName": "Siu",
+                            "operator": "<",
+                            "value": "23"
+                        }
+                    },
+                    {
+                        "type": "AND",
+                        "conditions": [
+                            {
+                                "type": "VariableCompare",
+                                "params": {
+                                    "variableName": "papa",
+                                    "operator": "==",
+                                    "value": "33"
+                                }
+                            },
+                            {
+                                "type": "VariableCompare",
+                                "params": {
+                                    "variableName": "patata",
+                                    "operator": "==",
+                                    "value": "56"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
         }
     ]
 }
