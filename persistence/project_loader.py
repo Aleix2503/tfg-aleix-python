@@ -32,7 +32,12 @@ def load_project(path, scene):
         if state_data.get("is_any_state", False):
             continue
         
-        state = State(state_data["id"], is_entry_point=False)
+        state = State(
+            state_data["id"],
+            is_entry_point=False,
+            is_any_state=False,
+            is_global_state=state_data.get("is_global_state", False)
+        )
 
         # Cargar acciones
         for action_data in state_data.get("enter", []):
@@ -60,11 +65,11 @@ def load_project(path, scene):
                     fsm.set_entry_point(state)
                     break
     
-    # Si no hay entry point y hay estados no-any, establecer el primero como entry point
+    # Si no hay entry point y hay estados regulares, establecer el primero como entry point
     if fsm.get_entry_point() is None:
-        non_any_states = [s for s in fsm.states if not s.is_any_state]
-        if non_any_states:
-            fsm.set_entry_point(non_any_states[0])
+        regular_states = [s for s in fsm.states if not s.is_any_state and not s.is_global_state]
+        if regular_states:
+            fsm.set_entry_point(regular_states[0])
     
     # Crear nodos visuales para todos los estados
     for state in fsm.states:

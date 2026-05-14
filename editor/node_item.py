@@ -27,11 +27,16 @@ class StateNode(QGraphicsRectItem, QObject):
         )
 
     def update_appearance(self):
-        """Actualiza la apariencia del nodo basada en si es entry point o any state"""
+        """Actualiza la apariencia del nodo basada en si es entry point, any state o global state"""
         if self.state.is_any_state:
             # Any state es naranja
             self.setBrush(Qt.darkMagenta)
             self.text.setPlainText("ANY")
+        elif self.state.is_global_state:
+            self.setBrush(QColor(70, 130, 180))
+            self.text.setPlainText(self.state.id)
+            if hasattr(self, 'entry_indicator'):
+                self.entry_indicator.hide()
         elif self.state.is_entry_point:
             self.setBrush(Qt.green)
             self.text.setPlainText(self.state.id)
@@ -64,10 +69,13 @@ class StateNode(QGraphicsRectItem, QObject):
 
     def show_context_menu(self, event):
         menu = QMenu()
-        create_transition_action = menu.addAction("Crear transición")
+        if not self.state.is_global_state:
+            create_transition_action = menu.addAction("Crear transición")
+        else:
+            create_transition_action = None
         
-        # Opción para establecer como entry point (solo si no es any_state)
-        if not self.state.is_any_state:
+        # Opción para establecer como entry point (solo si no es any_state y no es global_state)
+        if not self.state.is_any_state and not self.state.is_global_state:
             if self.state.is_entry_point:
                 entry_action = menu.addAction("✓ Es Entry Point")
                 entry_action.setEnabled(False)

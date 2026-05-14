@@ -146,6 +146,17 @@ class GraphView(QGraphicsView):
                               "No se pueden crear transiciones hacia ANY_STATE. Solo puedes crear transiciones DESDE ANY_STATE.")
             return
 
+        # No permitir transiciones desde o hacia global_state
+        if source_node.state.is_global_state or target_node.state.is_global_state:
+            from PySide6.QtWidgets import QMessageBox
+            QMessageBox.warning(
+                self,
+                "Transición Inválida",
+                "No se pueden crear transiciones desde ni hacia un Global State. "
+                "Los Global States solo ejecutan acciones en tick."
+            )
+            return
+
         if self.transition_exists(source_node, target_node):
             print(
                 f"Transition already exists: "
@@ -225,6 +236,7 @@ class GraphView(QGraphicsView):
         menu = QMenu()
         create_state_action = menu.addAction("Crear nuevo estado")
         create_entry_action = menu.addAction("Crear Entry Point")
+        create_global_action = menu.addAction("Crear Global State")
         
         action = menu.exec(event.globalPos())
         
@@ -234,6 +246,9 @@ class GraphView(QGraphicsView):
         elif action == create_entry_action:
             scene_pos = self.mapToScene(event.pos())
             self.create_entry_point_at(scene_pos.x(), scene_pos.y())
+        elif action == create_global_action:
+            scene_pos = self.mapToScene(event.pos())
+            self.create_global_state_at(scene_pos.x(), scene_pos.y())
 
     def create_state_at(self, x, y):
         # Generar nombre único para el estado
@@ -257,6 +272,29 @@ class GraphView(QGraphicsView):
         node.create_transition_requested.connect(
             lambda: self.start_transition_creation(node)
         )
+        node.clicked_for_transition.connect(
+            lambda: self.complete_transition(node)
+        )
+        
+        self.scene.addItem(node)
+
+    def create_global_state_at(self, x, y):
+        """Crea un estado global sin transiciones en la posición especificada"""
+        existing_states = {state.id for state in self.fsm.states}
+        counter = 1
+        while f"GlobalState_{counter}" in existing_states:
+            counter += 1
+        
+        state_name = f"GlobalState_{counter}"
+        
+        new_state = State(state_name, is_global_state=True)
+        self.fsm.add_state(new_state)
+        
+        node = StateNode(new_state, view=self)
+        node.setPos(x, y)
+        node.update_appearance()
+        
+        # Conectar click para completar transición si un nodo inicia la creación
         node.clicked_for_transition.connect(
             lambda: self.complete_transition(node)
         )

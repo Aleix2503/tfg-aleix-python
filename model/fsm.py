@@ -11,10 +11,10 @@ class FSM:
         self.states.append(any_state)
 
     def add_state(self, state):
-        # El primer estado no-any_state es automáticamente entry point
-        if not state.is_any_state:
-            non_any_states = [s for s in self.states if not s.is_any_state]
-            if len(non_any_states) == 0:
+        # El primer estado regular (no any_state, no global_state) es automáticamente entry point
+        if not state.is_any_state and not state.is_global_state:
+            regular_states = [s for s in self.states if not s.is_any_state and not s.is_global_state]
+            if len(regular_states) == 0:
                 state.is_entry_point = True
         self.states.append(state)
 

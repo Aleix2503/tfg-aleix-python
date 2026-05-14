@@ -6,7 +6,8 @@
         "states": [
             {
                 "id": "State_1",
-                "is_entry_point": false,
+                "is_entry_point": true,
+                "is_any_state": false,
                 "enter": [],
                 "tick": [],
                 "exit": []
@@ -14,44 +15,38 @@
             {
                 "id": "State_2",
                 "is_entry_point": false,
-                "enter": [],
-                "tick": [],
-                "exit": []
-            },
-            {
-                "id": "State_3",
-                "is_entry_point": true,
-                "enter": [],
-                "tick": [],
-                "exit": []
-            },
-            {
-                "id": "State_4",
-                "is_entry_point": false,
+                "is_any_state": false,
                 "enter": [],
                 "tick": [],
                 "exit": []
             }
         ],
-        "transitions": []
+        "transitions": [
+            {
+                "from": "ANY_STATE",
+                "to": "State_2",
+                "condition": null
+            },
+            {
+                "from": "ANY_STATE",
+                "to": "State_1",
+                "condition": null
+            }
+        ]
     },
     "editor": {
         "nodes": {
-            "State_4": {
-                "x": -68.0,
-                "y": -120.0
-            },
-            "State_3": {
-                "x": -344.0,
-                "y": 0.0
-            },
             "State_2": {
-                "x": -492.0,
-                "y": -105.0
+                "x": -101.0,
+                "y": -35.0
             },
             "State_1": {
-                "x": -263.0,
-                "y": -213.0
+                "x": 42.0,
+                "y": 102.0
+            },
+            "ANY_STATE": {
+                "x": -372.0,
+                "y": -42.0
             }
         },
         "zoom": 1.0

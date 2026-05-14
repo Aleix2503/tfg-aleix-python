@@ -3,31 +3,26 @@
     "name": "FSM",
     "states": [
         {
-            "id": "State_1",
+            "id": "ANY_STATE",
             "is_entry_point": false,
+            "is_any_state": true,
+            "is_global_state": false,
             "enter": [],
             "tick": [],
             "exit": []
         },
         {
-            "id": "State_2",
+            "id": "GlobalState_1",
             "is_entry_point": false,
+            "is_any_state": false,
+            "is_global_state": true,
             "enter": [],
-            "tick": [],
-            "exit": []
-        },
-        {
-            "id": "State_3",
-            "is_entry_point": true,
-            "enter": [],
-            "tick": [],
-            "exit": []
-        },
-        {
-            "id": "State_4",
-            "is_entry_point": false,
-            "enter": [],
-            "tick": [],
+            "tick": [
+                {
+                    "action": "LookAtTarget",
+                    "params": {}
+                }
+            ],
             "exit": []
         }
     ],

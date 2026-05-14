@@ -24,6 +24,7 @@ class Inspector(QWidget):
         self.current_transition = None
         self.current_condition = None
         self.any_state_info_label = None  # Rastreador para el label del ANY_STATE
+        self.global_state_info_label = None  # Rastreador para el label del Global State
 
         # Main layout para el widget del Inspector
         main_layout = QVBoxLayout(self)
@@ -380,6 +381,10 @@ class Inspector(QWidget):
             self.layout.removeWidget(self.any_state_info_label)
             self.any_state_info_label.deleteLater()
             self.any_state_info_label = None
+        if self.global_state_info_label is not None:
+            self.layout.removeWidget(self.global_state_info_label)
+            self.global_state_info_label.deleteLater()
+            self.global_state_info_label = None
         
         self.enter_list.clear()
         self.tick_list.clear()
@@ -414,6 +419,12 @@ class Inspector(QWidget):
             self.layout.removeWidget(self.any_state_info_label)
             self.any_state_info_label.deleteLater()
             self.any_state_info_label = None
+        
+        # Limpiar label del Global State anterior si existe
+        if self.global_state_info_label is not None:
+            self.layout.removeWidget(self.global_state_info_label)
+            self.global_state_info_label.deleteLater()
+            self.global_state_info_label = None
 
         # Si es ANY_STATE, mostrar mensaje especial
         if node.state.is_any_state:
@@ -433,6 +444,23 @@ class Inspector(QWidget):
         # Mostrar sección de estado
         self._show_state_section()
 
+        if node.state.is_global_state:
+            self.global_state_info_label = QLabel(
+                "Global State: solo puede tener acciones en Tick. No permite transiciones de entrada ni salida."
+            )
+            self.global_state_info_label.setWordWrap(True)
+            self.layout.insertWidget(1, self.global_state_info_label)
+
+            # Ocultar secciones que no aplican
+            self.enter_label.hide()
+            self.enter_list.hide()
+            self.enter_add.hide()
+            self.enter_remove.hide()
+            self.exit_label.hide()
+            self.exit_list.hide()
+            self.exit_add.hide()
+            self.exit_remove.hide()
+
         # Mostrar campo de nombre
         self.state_name_input.blockSignals(True)
         self.state_name_input.setText(node.state.id)
@@ -442,12 +470,16 @@ class Inspector(QWidget):
         self.tick_list.clear()
         self.exit_list.clear()
 
-        for a in node.state.enter:
-            self.enter_list.addItem(str(a))
+        if not node.state.is_global_state:
+            for a in node.state.enter:
+                self.enter_list.addItem(str(a))
+        
         for a in node.state.tick:
             self.tick_list.addItem(str(a))
-        for a in node.state.exit:
-            self.exit_list.addItem(str(a))
+        
+        if not node.state.is_global_state:
+            for a in node.state.exit:
+                self.exit_list.addItem(str(a))
 
     def on_state_name_changed(self):
         if not self.current_state or not self.current_node:
@@ -474,6 +506,16 @@ class Inspector(QWidget):
     def add_action(self, phase):
         if not self.current_state:
             return
+        
+        # No permitir añadir Enter/Exit a global states
+        if self.current_state.is_global_state and phase in ("enter", "exit"):
+            from PySide6.QtWidgets import QMessageBox
+            QMessageBox.warning(
+                self,
+                "Acción no permitida",
+                "Los Global States solo pueden tener acciones en Tick."
+            )
+            return
 
         action = Action("NewAction")
 
@@ -484,6 +526,10 @@ class Inspector(QWidget):
 
     def remove_action(self, phase):
         if not self.current_state:
+            return
+        
+        # No permitir eliminar Enter/Exit de global states
+        if self.current_state.is_global_state and phase in ("enter", "exit"):
             return
 
         list_widget = getattr(self, f"{phase}_list")
@@ -525,7 +571,9 @@ class Inspector(QWidget):
 
     def refresh(self):
         if self.current_node:
-            self.inspect_state(self.current_node)
+            node = self.current_node  # Guardar referencia antes de limpiar
+            self.clear()
+            self.inspect_state(node)
 
     def save_action_name(self):
         if not self.current_action:
@@ -585,6 +633,27 @@ class Inspector(QWidget):
                     else:  # string por defecto
                         widget = QLineEdit()
                         widget.textChanged.connect(self.sync_params_from_widgets)
+
+                    # Rellenar con valores existentes si existen
+                    if self.current_action and param_name in self.current_action.params:
+                        existing_value = self.current_action.params[param_name]
+                        
+                        if isinstance(widget, QSpinBox):
+                            widget.blockSignals(True)
+                            widget.setValue(int(existing_value))
+                            widget.blockSignals(False)
+                        elif isinstance(widget, QDoubleSpinBox):
+                            widget.blockSignals(True)
+                            widget.setValue(float(existing_value))
+                            widget.blockSignals(False)
+                        elif isinstance(widget, QCheckBox):
+                            widget.blockSignals(True)
+                            widget.setChecked(bool(existing_value))
+                            widget.blockSignals(False)
+                        elif isinstance(widget, QLineEdit):
+                            widget.blockSignals(True)
+                            widget.setText(str(existing_value))
+                            widget.blockSignals(False)
 
                     row.addWidget(widget)
                     self.params_layout.addLayout(row)
