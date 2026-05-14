@@ -26,6 +26,37 @@ class GraphView(QGraphicsView):
         self.creating_transition = False
         
         self.setFocusPolicy(Qt.StrongFocus)
+        
+        # Crear el nodo visual del any_state
+        if self.fsm:
+            self.setup_any_state()
+
+    def setup_any_state(self):
+        """Crea el nodo visual del any_state en la esquina superior izquierda"""
+        if not self.fsm:
+            return
+        
+        any_state = self.fsm.get_any_state()
+        if any_state:
+            # Verificar si ya existe el nodo visual
+            for item in self.scene.items():
+                if isinstance(item, StateNode) and item.state.is_any_state:
+                    return  # Ya existe
+            
+            # Crear nodo visual en la esquina superior izquierda
+            node = StateNode(any_state, view=self)
+            node.setPos(-50, -50)  # Esquina superior izquierda
+            node.update_appearance()
+            
+            # Conectar señales
+            node.create_transition_requested.connect(
+                lambda: self.start_transition_creation(node)
+            )
+            node.clicked_for_transition.connect(
+                lambda: self.complete_transition(node)
+            )
+            
+            self.scene.addItem(node)
 
     def on_selection_changed(self):
         if not self.inspector:
@@ -107,6 +138,13 @@ class GraphView(QGraphicsView):
     def create_transition(self, source_node, target_node):
         if source_node == target_node:
             return
+        
+        # No permitir transiciones hacia ANY_STATE
+        if target_node.state.is_any_state:
+            from PySide6.QtWidgets import QMessageBox
+            QMessageBox.warning(self, "Transición Inválida", 
+                              "No se pueden crear transiciones hacia ANY_STATE. Solo puedes crear transiciones DESDE ANY_STATE.")
+            return
 
         if self.transition_exists(source_node, target_node):
             print(
@@ -186,12 +224,16 @@ class GraphView(QGraphicsView):
         
         menu = QMenu()
         create_state_action = menu.addAction("Crear nuevo estado")
+        create_entry_action = menu.addAction("Crear Entry Point")
         
         action = menu.exec(event.globalPos())
         
         if action == create_state_action:
             scene_pos = self.mapToScene(event.pos())
             self.create_state_at(scene_pos.x(), scene_pos.y())
+        elif action == create_entry_action:
+            scene_pos = self.mapToScene(event.pos())
+            self.create_entry_point_at(scene_pos.x(), scene_pos.y())
 
     def create_state_at(self, x, y):
         # Generar nombre único para el estado
@@ -209,6 +251,7 @@ class GraphView(QGraphicsView):
         # Crear nodo visual (pasar referencia a la vista)
         node = StateNode(new_state, view=self)
         node.setPos(x, y)
+        node.update_appearance()
         
         # Conectar señales
         node.create_transition_requested.connect(
@@ -220,8 +263,57 @@ class GraphView(QGraphicsView):
         
         self.scene.addItem(node)
 
+    def create_entry_point_at(self, x, y):
+        """Crea un nuevo entry point en la posición especificada"""
+        # Generar nombre único para el estado
+        existing_states = {state.id for state in self.fsm.states}
+        counter = 1
+        while f"State_{counter}" in existing_states:
+            counter += 1
+        
+        state_name = f"State_{counter}"
+        
+        # Crear estado como entry point
+        new_state = State(state_name, is_entry_point=True)
+        
+        # Si hay un entry point anterior, desactivarlo
+        for state in self.fsm.states:
+            state.is_entry_point = False
+        
+        self.fsm.add_state(new_state)
+        
+        # Crear nodo visual
+        node = StateNode(new_state, view=self)
+        node.setPos(x, y)
+        node.update_appearance()
+        
+        # Conectar señales
+        node.create_transition_requested.connect(
+            lambda: self.start_transition_creation(node)
+        )
+        node.clicked_for_transition.connect(
+            lambda: self.complete_transition(node)
+        )
+        
+        self.scene.addItem(node)
+        
+        # Actualizar apariencia de otros nodos
+        for item in self.scene.items():
+            if isinstance(item, StateNode) and item != node:
+                item.update_appearance()
+
     def delete_state(self, node):
         """Elimina un estado, sus aristas y las transiciones asociadas del modelo y la escena."""
+        # No permitir eliminar any_state
+        if node.state.is_any_state:
+            from PySide6.QtWidgets import QMessageBox
+            QMessageBox.warning(self, "No se puede eliminar", 
+                              "El ANY_STATE no se puede eliminar. Es fundamental para transiciones globales.")
+            return
+        
+        # Verificar si se está eliminando el entry point
+        is_deleting_entry_point = node.state.is_entry_point
+        
         # Eliminar aristas conectadas
         for edge in list(node.edges):
             # Quitar referencia en nodos fuente/target
@@ -270,10 +362,12 @@ class GraphView(QGraphicsView):
                 self.fsm.states.remove(node.state)
         except Exception:
             pass
-
-        # Ajustar estado inicial si hacía falta
-        if self.fsm.initial_state == node.state.id:
-            self.fsm.initial_state = None if not self.fsm.states else self.fsm.states[0].id
+        
+        # Si se eliminó el entry point, mostrar advertencia
+        if is_deleting_entry_point:
+            from PySide6.QtWidgets import QMessageBox
+            QMessageBox.warning(self, "Entry Point Eliminado", 
+                              "El Entry Point ha sido eliminado. La FSM ahora no tiene punto de entrada.")
 
     def delete_edge(self, edge):
         """Elimina una arista/transition individualmente."""

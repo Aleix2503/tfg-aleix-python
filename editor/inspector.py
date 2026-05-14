@@ -23,6 +23,7 @@ class Inspector(QWidget):
         self.current_action = None
         self.current_transition = None
         self.current_condition = None
+        self.any_state_info_label = None  # Rastreador para el label del ANY_STATE
 
         # Main layout para el widget del Inspector
         main_layout = QVBoxLayout(self)
@@ -373,6 +374,13 @@ class Inspector(QWidget):
         self.current_transition = None
         self.current_condition = None
         self.current_action = None
+        
+        # Limpiar label del ANY_STATE si existe
+        if self.any_state_info_label is not None:
+            self.layout.removeWidget(self.any_state_info_label)
+            self.any_state_info_label.deleteLater()
+            self.any_state_info_label = None
+        
         self.enter_list.clear()
         self.tick_list.clear()
         self.exit_list.clear()
@@ -400,6 +408,25 @@ class Inspector(QWidget):
     def inspect_state(self, node):
         self.current_node = node
         self.current_state = node.state
+        
+        # Limpiar label del ANY_STATE anterior si existe
+        if self.any_state_info_label is not None:
+            self.layout.removeWidget(self.any_state_info_label)
+            self.any_state_info_label.deleteLater()
+            self.any_state_info_label = None
+
+        # Si es ANY_STATE, mostrar mensaje especial
+        if node.state.is_any_state:
+            self.title.setText("ANY_STATE")
+            self.title.show()
+            # Ocultar todas las demás secciones
+            self._hide_all_sections()
+            
+            # Mostrar un label informativo
+            self.any_state_info_label = QLabel("ANY_STATE: Transiciones globales que se pueden ejecutar desde cualquier estado.")
+            self.any_state_info_label.setWordWrap(True)
+            self.layout.insertWidget(1, self.any_state_info_label)
+            return
 
         self.title.setText(f"State: {node.state.id}")
         

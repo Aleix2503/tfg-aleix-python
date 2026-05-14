@@ -1,5 +1,6 @@
-from PySide6.QtWidgets import QGraphicsRectItem, QGraphicsTextItem, QMenu
-from PySide6.QtCore import Qt, Signal, QObject
+from PySide6.QtWidgets import QGraphicsRectItem, QGraphicsTextItem, QMenu, QGraphicsEllipseItem
+from PySide6.QtCore import Qt, Signal, QObject, QPointF
+from PySide6.QtGui import QPen, QColor, QBrush
 
 class StateNode(QGraphicsRectItem, QObject):
     create_transition_requested = Signal()
@@ -16,13 +17,35 @@ class StateNode(QGraphicsRectItem, QObject):
         self.text = QGraphicsTextItem(state.id, self)
         self.text.setPos(10, 10)
 
-        self.setBrush(Qt.lightGray)
+        # Dibujar indicador de entry point si es necesario
+        self.update_appearance()
 
         self.setFlags(
             QGraphicsRectItem.ItemIsMovable |
             QGraphicsRectItem.ItemIsSelectable |
             QGraphicsRectItem.ItemSendsGeometryChanges  
         )
+
+    def update_appearance(self):
+        """Actualiza la apariencia del nodo basada en si es entry point o any state"""
+        if self.state.is_any_state:
+            # Any state es naranja
+            self.setBrush(Qt.darkMagenta)
+            self.text.setPlainText("ANY")
+        elif self.state.is_entry_point:
+            self.setBrush(Qt.green)
+            self.text.setPlainText(self.state.id)
+            # Crear círculo de entrada
+            if not hasattr(self, 'entry_indicator'):
+                self.entry_indicator = QGraphicsEllipseItem(self)
+                self.entry_indicator.setRect(-15, 10, 10, 10)
+                self.entry_indicator.setBrush(QBrush(QColor(0, 200, 0)))
+                self.entry_indicator.setPen(QPen(Qt.darkGreen))
+        else:
+            self.setBrush(Qt.lightGray)
+            self.text.setPlainText(self.state.id)
+            if hasattr(self, 'entry_indicator'):
+                self.entry_indicator.hide()
 
     def add_edge(self, edge):
         self.edges.append(edge)
@@ -42,16 +65,44 @@ class StateNode(QGraphicsRectItem, QObject):
     def show_context_menu(self, event):
         menu = QMenu()
         create_transition_action = menu.addAction("Crear transición")
-        delete_action = menu.addAction("Eliminar estado")
+        
+        # Opción para establecer como entry point (solo si no es any_state)
+        if not self.state.is_any_state:
+            if self.state.is_entry_point:
+                entry_action = menu.addAction("✓ Es Entry Point")
+                entry_action.setEnabled(False)
+            else:
+                entry_action = menu.addAction("Establecer como Entry Point")
+        else:
+            entry_action = None
+        
+        # Opción para eliminar (solo si no es any_state)
+        if not self.state.is_any_state:
+            delete_action = menu.addAction("Eliminar estado")
+        else:
+            delete_action = None
         
         action = menu.exec(event.screenPos())
         
         if action == create_transition_action:
             self.create_transition_requested.emit()
+        elif action == entry_action and not self.state.is_entry_point:
+            self.set_as_entry_point()
         elif action == delete_action:
             # Pedir a la vista que elimine este nodo
             if self.view:
                 self.view.delete_state(self)
+
+    def set_as_entry_point(self):
+        """Establece este estado como entry point"""
+        if self.view and self.view.fsm:
+            # Actualizar en el modelo
+            self.view.fsm.set_entry_point(self.state)
+            
+            # Actualizar apariencia de todos los nodos
+            for item in self.view.scene.items():
+                if isinstance(item, StateNode):
+                    item.update_appearance()
 
     def itemChange(self, change, value):
         if change == QGraphicsRectItem.ItemPositionHasChanged:  
@@ -61,14 +112,5 @@ class StateNode(QGraphicsRectItem, QObject):
         return super().itemChange(change, value)
 
     def contextMenuEvent(self, event):
-        menu = QMenu()
-        create_transition_action = menu.addAction("Crear transición")
-        delete_action = menu.addAction("Eliminar estado")
-        
-        action = menu.exec(event.screenPos())
-        
-        if action == create_transition_action:
-            self.create_transition_requested.emit()
-        elif action == delete_action:
-            if self.view:
-                self.view.delete_state(self)
+        # El menú contextual es manejado por mousePressEvent
+        pass

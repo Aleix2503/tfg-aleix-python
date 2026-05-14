@@ -1,59 +1,35 @@
 {
     "version": "1.0",
     "name": "FSM",
-    "initial_state": "State_1",
     "states": [
         {
             "id": "State_1",
+            "is_entry_point": false,
             "enter": [],
             "tick": [],
             "exit": []
         },
         {
             "id": "State_2",
+            "is_entry_point": false,
+            "enter": [],
+            "tick": [],
+            "exit": []
+        },
+        {
+            "id": "State_3",
+            "is_entry_point": true,
+            "enter": [],
+            "tick": [],
+            "exit": []
+        },
+        {
+            "id": "State_4",
+            "is_entry_point": false,
             "enter": [],
             "tick": [],
             "exit": []
         }
     ],
-    "transitions": [
-        {
-            "from": "State_2",
-            "to": "State_1",
-            "condition": {
-                "type": "OR",
-                "conditions": [
-                    {
-                        "type": "VariableCompare",
-                        "params": {
-                            "variableName": "Siu",
-                            "operator": "<",
-                            "value": "23"
-                        }
-                    },
-                    {
-                        "type": "AND",
-                        "conditions": [
-                            {
-                                "type": "VariableCompare",
-                                "params": {
-                                    "variableName": "papa",
-                                    "operator": "==",
-                                    "value": "33"
-                                }
-                            },
-                            {
-                                "type": "VariableCompare",
-                                "params": {
-                                    "variableName": "patata",
-                                    "operator": "==",
-                                    "value": "56"
-                                }
-                            }
-                        ]
-                    }
-                ]
-            }
-        }
-    ]
+    "transitions": []
 }

@@ -26,9 +26,13 @@ def load_project(path, scene):
     # ESTADOS
     # ─────────────────────────────────────
 
+    # Cargar estados SIN is_entry_point para que FSM.add_state() los maneje
     for state_data in fsm_data["states"]:
-
-        state = State(state_data["id"])
+        # Ignorar el any_state si existe (se crea automáticamente)
+        if state_data.get("is_any_state", False):
+            continue
+        
+        state = State(state_data["id"], is_entry_point=False)
 
         # Cargar acciones
         for action_data in state_data.get("enter", []):
@@ -46,28 +50,49 @@ def load_project(path, scene):
             action.params = action_data.get("params", {})
             state.exit.append(action)
 
-        fsm.add_state(state)
-
+        fsm.states.append(state)  # Agregar directamente sin usar add_state()
+    
+    # Ahora establecer el entry point correcto
+    for state_data in fsm_data["states"]:
+        if state_data.get("is_entry_point", False):
+            for state in fsm.states:
+                if state.id == state_data["id"]:
+                    fsm.set_entry_point(state)
+                    break
+    
+    # Si no hay entry point y hay estados no-any, establecer el primero como entry point
+    if fsm.get_entry_point() is None:
+        non_any_states = [s for s in fsm.states if not s.is_any_state]
+        if non_any_states:
+            fsm.set_entry_point(non_any_states[0])
+    
+    # Crear nodos visuales para todos los estados
+    for state in fsm.states:
         # Posición visual
         pos = editor_data["nodes"].get(state.id, {})
 
         x = pos.get("x", 0)
         y = pos.get("y", 0)
+        
+        # Si es any_state y no tiene posición guardada, posicionarlo en esquina superior izquierda
+        if state.is_any_state and not editor_data["nodes"].get(state.id):
+            x = -50
+            y = -50
 
         node = StateNode(state)
         node.setPos(x, y)
-        node.view = scene.views()[0]
+        node.view = scene.views()[0] if scene.views() else None
+        node.update_appearance()
 
-        node.create_transition_requested.connect(
-            lambda n=node: node.view.start_transition_creation(n)
-        )
-
-        node.clicked_for_transition.connect(
-            lambda n=node: node.view.complete_transition(n)
-        )
+        if node.view:
+            node.create_transition_requested.connect(
+                lambda n=node: n.view.start_transition_creation(n)
+            )
+            node.clicked_for_transition.connect(
+                lambda n=node: n.view.complete_transition(n)
+            )
 
         scene.addItem(node)
-
         node_map[state.id] = node
 
     # ─────────────────────────────────────
