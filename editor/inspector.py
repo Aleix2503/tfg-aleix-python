@@ -15,7 +15,7 @@ from data.action_registry import ACTION_REGISTRY, ALL_ACTIONS
 
 
 class Inspector(QWidget):
-    def __init__(self):
+    def __init__(self, on_change_callback=None):
         super().__init__()
 
         self.current_state = None
@@ -25,6 +25,7 @@ class Inspector(QWidget):
         self.current_condition = None
         self.any_state_info_label = None  # Rastreador para el label del ANY_STATE
         self.global_state_info_label = None  # Rastreador para el label del Global State
+        self.on_change_callback = on_change_callback  # Callback para notificar cambios
 
         # Main layout para el widget del Inspector
         main_layout = QVBoxLayout(self)
@@ -144,6 +145,7 @@ class Inspector(QWidget):
         self.action_save = QPushButton("Save Action")
         self.layout.addWidget(self.action_save)
         self.action_save.clicked.connect(self.save_action_name)
+        self.action_save.clicked.connect(self._notify_change)
         self.state_widgets.append(self.action_save)
 
         # --- ACTION PARAMETERS ---
@@ -171,6 +173,9 @@ class Inspector(QWidget):
 
         self.param_add.clicked.connect(self.add_param)
         self.param_remove.clicked.connect(self.remove_param)
+
+        # Flag para rastrear si la tabla está conectada
+        self.params_table_connected = True
         self.params_table.itemChanged.connect(self.on_param_table_changed)
 
         # Layout de parámetros generados automáticamente
@@ -738,6 +743,12 @@ class Inspector(QWidget):
     def on_param_table_changed(self, item):
         """Se ejecuta cuando cambia algo en la tabla de parámetros"""
         self.sync_params_from_table()
+        self._notify_change()
+
+    def _notify_change(self):
+        """Notifica que hubo cambios"""
+        if self.on_change_callback:
+            self.on_change_callback()
 
     def sync_params_from_table(self):
         """Sincroniza los parámetros personalizados desde la tabla a la acción actual"""

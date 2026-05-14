@@ -5,29 +5,19 @@
         "name": "FSM",
         "states": [
             {
-                "id": "GlobalState_1",
-                "is_entry_point": false,
-                "is_any_state": false,
-                "is_global_state": true,
-                "enter": [],
-                "tick": [
-                    {
-                        "action": "PlayAnimation",
-                        "params": {
-                            "animationName": "32",
-                            "speed": 2.0,
-                            "loop": true,
-                            "param_name": "value"
-                        }
-                    }
-                ],
-                "exit": []
-            },
-            {
                 "id": "State_1",
                 "is_entry_point": true,
                 "is_any_state": false,
                 "is_global_state": false,
+                "enter": [],
+                "tick": [],
+                "exit": []
+            },
+            {
+                "id": "GlobalState_1",
+                "is_entry_point": false,
+                "is_any_state": false,
+                "is_global_state": true,
                 "enter": [],
                 "tick": [],
                 "exit": []
@@ -37,23 +27,26 @@
             {
                 "from": "ANY_STATE",
                 "to": "State_1",
-                "condition": null
+                "condition": {
+                    "type": "VariableCompare",
+                    "params": {}
+                }
             }
         ]
     },
     "editor": {
         "nodes": {
-            "State_1": {
-                "x": -39.0,
-                "y": -189.0
-            },
             "GlobalState_1": {
-                "x": -396.0,
-                "y": -166.0
+                "x": -55.0,
+                "y": -227.0
+            },
+            "State_1": {
+                "x": -413.0,
+                "y": -185.0
             },
             "ANY_STATE": {
-                "x": -263.0,
-                "y": -21.0
+                "x": -50.0,
+                "y": -50.0
             }
         },
         "zoom": 1.0
