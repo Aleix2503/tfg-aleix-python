@@ -19,12 +19,32 @@
             "enter": [],
             "tick": [
                 {
-                    "action": "LookAtTarget",
-                    "params": {}
+                    "action": "PlayAnimation",
+                    "params": {
+                        "animationName": "32",
+                        "speed": 2.0,
+                        "loop": true,
+                        "param_name": "value"
+                    }
                 }
             ],
             "exit": []
+        },
+        {
+            "id": "State_1",
+            "is_entry_point": true,
+            "is_any_state": false,
+            "is_global_state": false,
+            "enter": [],
+            "tick": [],
+            "exit": []
         }
     ],
-    "transitions": []
+    "transitions": [
+        {
+            "from": "ANY_STATE",
+            "to": "State_1",
+            "condition": null
+        }
+    ]
 }

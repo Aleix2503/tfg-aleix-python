@@ -5,28 +5,35 @@
         "name": "FSM",
         "states": [
             {
-                "id": "State_1",
-                "is_entry_point": true,
+                "id": "GlobalState_1",
+                "is_entry_point": false,
                 "is_any_state": false,
+                "is_global_state": true,
                 "enter": [],
-                "tick": [],
+                "tick": [
+                    {
+                        "action": "PlayAnimation",
+                        "params": {
+                            "animationName": "32",
+                            "speed": 2.0,
+                            "loop": true,
+                            "param_name": "value"
+                        }
+                    }
+                ],
                 "exit": []
             },
             {
-                "id": "State_2",
-                "is_entry_point": false,
+                "id": "State_1",
+                "is_entry_point": true,
                 "is_any_state": false,
+                "is_global_state": false,
                 "enter": [],
                 "tick": [],
                 "exit": []
             }
         ],
         "transitions": [
-            {
-                "from": "ANY_STATE",
-                "to": "State_2",
-                "condition": null
-            },
             {
                 "from": "ANY_STATE",
                 "to": "State_1",
@@ -36,17 +43,17 @@
     },
     "editor": {
         "nodes": {
-            "State_2": {
-                "x": -101.0,
-                "y": -35.0
-            },
             "State_1": {
-                "x": 42.0,
-                "y": 102.0
+                "x": -39.0,
+                "y": -189.0
+            },
+            "GlobalState_1": {
+                "x": -396.0,
+                "y": -166.0
             },
             "ANY_STATE": {
-                "x": -372.0,
-                "y": -42.0
+                "x": -263.0,
+                "y": -21.0
             }
         },
         "zoom": 1.0

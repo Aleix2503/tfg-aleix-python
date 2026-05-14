@@ -285,6 +285,10 @@ class Inspector(QWidget):
             lambda item: self.select_action("exit", item)
         )
 
+        # Flag para rastrear si la tabla está conectada
+        self.params_table_connected = True
+        self.params_table.itemChanged.connect(self.on_param_table_changed)
+
     def _hide_all_sections(self):
         for widget in self.state_widgets:
             if isinstance(widget, (QHBoxLayout, QVBoxLayout)):
@@ -564,10 +568,12 @@ class Inspector(QWidget):
 
         # Mostrar parámetros
         self._show_action_params()
-        self.refresh_params_table()
-        
-        # 🔥 Regenerar UI dinámica
+
+        # Generar widgets automáticos primero
         self.generate_params_for_action(self.current_action.name)
+
+        # Cargar parámetros en la tabla DESPUÉS de generar los widgets
+        self.refresh_params_table()
 
     def refresh(self):
         if self.current_node:
@@ -585,8 +591,12 @@ class Inspector(QWidget):
             return
 
         self.current_action.name = name
-        
-        # Sincronizar parámetros antes de regenerar
+
+        # Sincronizar PRIMERO los parámetros predefinidos desde los widgets
+        if self.param_widgets:
+            self.sync_params_from_widgets()
+
+        # LUEGO sincronizar los parámetros personalizados desde la tabla
         self.sync_params_from_table()
 
         # Generar widgets tipados
@@ -598,69 +608,74 @@ class Inspector(QWidget):
     # PARÁMETROS
     # ─────────────────────────────────────
 
+    def get_predefined_params(self, action_name):
+        """Obtiene los parámetros predefinidos de una acción del registro"""
+        for category in ACTION_REGISTRY.values():
+            if action_name in category:
+                return category[action_name]
+        return {}
+
     def generate_params_for_action(self, action_name):
         # Limpiar layout anterior
         self.clear_layout(self.params_layout)
 
         self.param_widgets = {}
 
-        # Buscar acción
-        for category in ACTION_REGISTRY.values():
-            if action_name in category:
-                params = category[action_name]
+        # Obtener parámetros predefinidos
+        predefined_params = self.get_predefined_params(action_name)
 
-                for param_name, param_type in params.items():
-                    row = QHBoxLayout()
-                    label = QLabel(param_name)
-                    row.addWidget(label)
+        if predefined_params:
+            # Hay parámetros predefinidos
+            for param_name, param_type in predefined_params.items():
+                row = QHBoxLayout()
+                label = QLabel(param_name)
+                row.addWidget(label)
 
-                    # Crear widget según tipo
-                    if param_type == "int":
-                        widget = QSpinBox()
-                        widget.setRange(-999999, 999999)
-                        widget.valueChanged.connect(self.sync_params_from_widgets)
+                # Crear widget según tipo
+                if param_type == "int":
+                    widget = QSpinBox()
+                    widget.setRange(-999999, 999999)
+                    widget.valueChanged.connect(self.sync_params_from_widgets)
 
-                    elif param_type == "float":
-                        widget = QDoubleSpinBox()
-                        widget.setRange(-999999.0, 999999.0)
-                        widget.setDecimals(3)
-                        widget.valueChanged.connect(self.sync_params_from_widgets)
+                elif param_type == "float":
+                    widget = QDoubleSpinBox()
+                    widget.setRange(-999999.0, 999999.0)
+                    widget.setDecimals(3)
+                    widget.valueChanged.connect(self.sync_params_from_widgets)
 
-                    elif param_type == "bool":
-                        widget = QCheckBox()
-                        widget.stateChanged.connect(self.sync_params_from_widgets)
+                elif param_type == "bool":
+                    widget = QCheckBox()
+                    widget.stateChanged.connect(self.sync_params_from_widgets)
 
-                    else:  # string por defecto
-                        widget = QLineEdit()
-                        widget.textChanged.connect(self.sync_params_from_widgets)
+                else:  # string por defecto
+                    widget = QLineEdit()
+                    widget.textChanged.connect(self.sync_params_from_widgets)
 
-                    # Rellenar con valores existentes si existen
-                    if self.current_action and param_name in self.current_action.params:
-                        existing_value = self.current_action.params[param_name]
-                        
-                        if isinstance(widget, QSpinBox):
-                            widget.blockSignals(True)
-                            widget.setValue(int(existing_value))
-                            widget.blockSignals(False)
-                        elif isinstance(widget, QDoubleSpinBox):
-                            widget.blockSignals(True)
-                            widget.setValue(float(existing_value))
-                            widget.blockSignals(False)
-                        elif isinstance(widget, QCheckBox):
-                            widget.blockSignals(True)
-                            widget.setChecked(bool(existing_value))
-                            widget.blockSignals(False)
-                        elif isinstance(widget, QLineEdit):
-                            widget.blockSignals(True)
-                            widget.setText(str(existing_value))
-                            widget.blockSignals(False)
+                # Rellenar con valores existentes si existen
+                if self.current_action and param_name in self.current_action.params:
+                    existing_value = self.current_action.params[param_name]
 
-                    row.addWidget(widget)
-                    self.params_layout.addLayout(row)
+                    if isinstance(widget, QSpinBox):
+                        widget.blockSignals(True)
+                        widget.setValue(int(existing_value))
+                        widget.blockSignals(False)
+                    elif isinstance(widget, QDoubleSpinBox):
+                        widget.blockSignals(True)
+                        widget.setValue(float(existing_value))
+                        widget.blockSignals(False)
+                    elif isinstance(widget, QCheckBox):
+                        widget.blockSignals(True)
+                        widget.setChecked(bool(existing_value))
+                        widget.blockSignals(False)
+                    elif isinstance(widget, QLineEdit):
+                        widget.blockSignals(True)
+                        widget.setText(str(existing_value))
+                        widget.blockSignals(False)
 
-                    self.param_widgets[param_name] = widget
+                row.addWidget(widget)
+                self.params_layout.addLayout(row)
 
-                break
+                self.param_widgets[param_name] = widget
 
     def sync_params_from_widgets(self):
         if not self.current_action:
@@ -725,11 +740,17 @@ class Inspector(QWidget):
         self.sync_params_from_table()
 
     def sync_params_from_table(self):
-        """Sincroniza los parámetros desde la tabla a la acción actual"""
+        """Sincroniza los parámetros personalizados desde la tabla a la acción actual"""
         if not self.current_action:
             return
 
-        params = {}
+        # Obtener los parámetros predefinidos
+        predefined_params = self.get_predefined_params(self.current_action.name)
+
+        # Mantener los parámetros predefinidos existentes
+        params = {k: v for k, v in self.current_action.params.items() if k in predefined_params}
+
+        # Agregar parámetros personalizados desde la tabla
         for row in range(self.params_table.rowCount()):
             name_item = self.params_table.item(row, 0)
             value_item = self.params_table.item(row, 1)
@@ -738,22 +759,27 @@ class Inspector(QWidget):
                 name = name_item.text().strip()
                 value = value_item.text().strip()
 
-                if name:  # Solo agregar si el nombre no está vacío
+                if name and name not in predefined_params:  # Solo agregar si no es predefinido
                     params[name] = value
 
         self.current_action.params = params
 
     def refresh_params_table(self):
-        """Recarga la tabla de parámetros con los datos actuales"""
+        """Recarga la tabla de parámetros con los datos actuales (solo parámetros personalizados)"""
         self.params_table.blockSignals(True)
         self.params_table.setRowCount(0)
 
         if self.current_action and self.current_action.params:
+            # Obtener los parámetros predefinidos para esta acción
+            predefined_params = self.get_predefined_params(self.current_action.name)
+
+            # Mostrar solo los parámetros que NO son predefinidos
             for param_name, param_value in self.current_action.params.items():
-                row = self.params_table.rowCount()
-                self.params_table.insertRow(row)
-                self.params_table.setItem(row, 0, QTableWidgetItem(param_name))
-                self.params_table.setItem(row, 1, QTableWidgetItem(str(param_value)))
+                if param_name not in predefined_params:
+                    row = self.params_table.rowCount()
+                    self.params_table.insertRow(row)
+                    self.params_table.setItem(row, 0, QTableWidgetItem(param_name))
+                    self.params_table.setItem(row, 1, QTableWidgetItem(str(param_value)))
 
         self.params_table.blockSignals(False)
 
