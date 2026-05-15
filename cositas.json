@@ -12,25 +12,6 @@
             "exit": []
         },
         {
-            "id": "GlobalState_1",
-            "is_entry_point": false,
-            "is_any_state": false,
-            "is_global_state": true,
-            "enter": [],
-            "tick": [
-                {
-                    "action": "PlayAnimation",
-                    "params": {
-                        "animationName": "32",
-                        "speed": 2.0,
-                        "loop": true,
-                        "param_name": "value"
-                    }
-                }
-            ],
-            "exit": []
-        },
-        {
             "id": "State_1",
             "is_entry_point": true,
             "is_any_state": false,
@@ -41,6 +22,11 @@
         }
     ],
     "transitions": [
+        {
+            "from": "State_1",
+            "to": "State_1",
+            "condition": null
+        },
         {
             "from": "ANY_STATE",
             "to": "State_1",

@@ -141,9 +141,6 @@ class GraphView(QGraphicsView):
     def create_transition(self, source_node, target_node):
         from commands import CreateTransitionCommand
 
-        if source_node == target_node:
-            return
-
         # No permitir transiciones hacia ANY_STATE
         if target_node.state.is_any_state:
             from PySide6.QtWidgets import QMessageBox

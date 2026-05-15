@@ -1,0 +1,26 @@
+Windows Registry Editor Version 5.00
+
+; FSM Project File Association Registry
+; This file registers .fsmproj files to open with FSM Editor
+;
+; IMPORTANT: You need to:
+; 1. Replace "C:\path\to\FSMEditor.exe" with the actual path to your executable
+; 2. Double-click this file to apply the registry changes
+; 3. You may need administrator privileges
+
+; File extension association
+[HKEY_CLASSES_ROOT\.fsmproj]
+@="FSMProjectFile"
+"Content Type"="application/x-fsmproj"
+
+; File type definition
+[HKEY_CLASSES_ROOT\FSMProjectFile]
+@="FSM Project File"
+
+; Icon for files (shows icon in explorer)
+[HKEY_CLASSES_ROOT\FSMProjectFile\DefaultIcon]
+@="C:\\path\\to\\FSMEditor.exe,0"
+
+; Open command (what happens on double-click)
+[HKEY_CLASSES_ROOT\FSMProjectFile\shell\open\command]
+@="\"C:\\path\\to\\FSMEditor.exe\" \"%1\""
