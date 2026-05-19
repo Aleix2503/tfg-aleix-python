@@ -39,20 +39,30 @@ def load_project(path, scene):
             is_global_state=state_data.get("is_global_state", False)
         )
 
-        # Cargar acciones
+        # Cargar acciones (convertir formato antiguo si es necesario)
+        def load_action_params(action_data):
+            """Cargar parámetros en formato nuevo (array) o antiguo (dict)"""
+            params = action_data.get("params", [])
+
+            # Si params es un diccionario (formato antiguo), convertir a array
+            if isinstance(params, dict):
+                params = [{"key": k, "value": v} for k, v in params.items()]
+
+            return params if isinstance(params, list) else []
+
         for action_data in state_data.get("enter", []):
             action = Action(action_data["action"])
-            action.params = action_data.get("params", {})
+            action.params = load_action_params(action_data)
             state.enter.append(action)
 
         for action_data in state_data.get("tick", []):
             action = Action(action_data["action"])
-            action.params = action_data.get("params", {})
+            action.params = load_action_params(action_data)
             state.tick.append(action)
 
         for action_data in state_data.get("exit", []):
             action = Action(action_data["action"])
-            action.params = action_data.get("params", {})
+            action.params = load_action_params(action_data)
             state.exit.append(action)
 
         fsm.states.append(state)  # Agregar directamente sin usar add_state()

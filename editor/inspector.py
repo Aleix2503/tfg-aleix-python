@@ -657,9 +657,19 @@ class Inspector(QWidget):
                     widget.textChanged.connect(self.sync_params_from_widgets)
 
                 # Rellenar con valores existentes si existen
-                if self.current_action and param_name in self.current_action.params:
-                    existing_value = self.current_action.params[param_name]
+                existing_value = None
+                if self.current_action:
+                    # Buscar en lista nueva
+                    if isinstance(self.current_action.params, list):
+                        for p in self.current_action.params:
+                            if p.get("key") == param_name:
+                                existing_value = p.get("value")
+                                break
+                    # O en diccionario antiguo
+                    elif isinstance(self.current_action.params, dict) and param_name in self.current_action.params:
+                        existing_value = self.current_action.params[param_name]
 
+                if existing_value is not None:
                     if isinstance(widget, QSpinBox):
                         widget.blockSignals(True)
                         widget.setValue(int(existing_value))
@@ -686,21 +696,25 @@ class Inspector(QWidget):
         if not self.current_action:
             return
 
-        params = {}
+        params = []
 
         for name, widget in self.param_widgets.items():
+            value = None
 
             if isinstance(widget, QSpinBox):
-                params[name] = widget.value()
+                value = widget.value()
 
             elif isinstance(widget, QDoubleSpinBox):
-                params[name] = widget.value()
+                value = widget.value()
 
             elif isinstance(widget, QCheckBox):
-                params[name] = widget.isChecked()
+                value = widget.isChecked()
 
             elif isinstance(widget, QLineEdit):
-                params[name] = widget.text()
+                value = widget.text()
+
+            if value is not None:
+                params.append({"key": name, "value": str(value)})
 
         self.current_action.params = params
 
@@ -758,8 +772,13 @@ class Inspector(QWidget):
         # Obtener los parámetros predefinidos
         predefined_params = self.get_predefined_params(self.current_action.name)
 
-        # Mantener los parámetros predefinidos existentes
-        params = {k: v for k, v in self.current_action.params.items() if k in predefined_params}
+        # Mantener los parámetros predefinidos existentes (convertir a lista si es necesario)
+        if isinstance(self.current_action.params, dict):
+            # Convertir diccionario antiguo a lista nueva
+            params = [{"key": k, "value": v} for k, v in self.current_action.params.items() if k in predefined_params]
+        else:
+            # Ya es lista, mantener parámetros predefinidos
+            params = [p for p in self.current_action.params if p.get("key") in predefined_params]
 
         # Agregar parámetros personalizados desde la tabla
         for row in range(self.params_table.rowCount()):
@@ -771,7 +790,7 @@ class Inspector(QWidget):
                 value = value_item.text().strip()
 
                 if name and name not in predefined_params:  # Solo agregar si no es predefinido
-                    params[name] = value
+                    params.append({"key": name, "value": value})
 
         self.current_action.params = params
 
@@ -784,8 +803,16 @@ class Inspector(QWidget):
             # Obtener los parámetros predefinidos para esta acción
             predefined_params = self.get_predefined_params(self.current_action.name)
 
+            # Convertir a lista si es diccionario antiguo
+            params = self.current_action.params
+            if isinstance(params, dict):
+                params = [{"key": k, "value": v} for k, v in params.items()]
+
             # Mostrar solo los parámetros que NO son predefinidos
-            for param_name, param_value in self.current_action.params.items():
+            for param in params:
+                param_name = param.get("key") if isinstance(param, dict) else param
+                param_value = param.get("value") if isinstance(param, dict) else ""
+
                 if param_name not in predefined_params:
                     row = self.params_table.rowCount()
                     self.params_table.insertRow(row)

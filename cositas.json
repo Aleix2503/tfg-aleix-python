@@ -16,21 +16,24 @@
             "is_entry_point": true,
             "is_any_state": false,
             "is_global_state": false,
-            "enter": [],
+            "enter": [
+                {
+                    "action": "NewAction",
+                    "params": [
+                        {
+                            "key": "2121",
+                            "value": "35464"
+                        },
+                        {
+                            "key": "74854",
+                            "value": "value"
+                        }
+                    ]
+                }
+            ],
             "tick": [],
             "exit": []
         }
     ],
-    "transitions": [
-        {
-            "from": "State_1",
-            "to": "State_1",
-            "condition": null
-        },
-        {
-            "from": "ANY_STATE",
-            "to": "State_1",
-            "condition": null
-        }
-    ]
+    "transitions": []
 }
