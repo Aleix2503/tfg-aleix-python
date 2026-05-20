@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (
     QTableWidgetItem, QLineEdit, QComboBox, QCompleter,
     QDoubleSpinBox, QCheckBox, QScrollArea, QTreeWidget, QTreeWidgetItem
 )
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QStringListModel
 
 from editor.node_item import StateNode
 from editor.edge_item import TransitionEdge
@@ -12,6 +12,7 @@ from model.action import Action
 from model.condition import GenericCondition, LogicalCondition
 from data.condition_registry import CONDITION_REGISTRY, ALL_CONDITIONS
 from data.action_registry import ACTION_REGISTRY, ALL_ACTIONS
+from data.variable_registry import VARIABLE_REGISTRY, ALL_VARIABLES
 
 
 class Inspector(QWidget):
@@ -981,6 +982,13 @@ class Inspector(QWidget):
 
                     else:
                         widget = QLineEdit()
+
+                        # Autocompletado para variableName
+                        if param_name == "variableName":
+                            completer = QCompleter(ALL_VARIABLES)
+                            completer.setCaseSensitivity(Qt.CaseInsensitive)
+                            widget.setCompleter(completer)
+                            widget.setPlaceholderText("Ej: distanceToPlayer, health, isGrounded")
 
                     row.addWidget(widget)
                     self.condition_params_layout.addLayout(row)

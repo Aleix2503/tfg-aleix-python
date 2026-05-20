@@ -13,67 +13,67 @@ CONDITION_REGISTRY = {
         }
     },
 
-    "Target": {
-        "HasTarget": {},
-        "TargetInRange": {
-            "range": "float"
-        },
-        "TargetOutOfRange": {
-            "range": "float"
-        },
-        "CanSeeTarget": {},
-        "LostSightOfTarget": {
-            "duration": "float"
-        }
-    },
+    # "Target": {
+    #     "HasTarget": {},
+    #     "TargetInRange": {
+    #         "range": "float"
+    #     },
+    #     "TargetOutOfRange": {
+    #         "range": "float"
+    #     },
+    #     "CanSeeTarget": {},
+    #     "LostSightOfTarget": {
+    #         "duration": "float"
+    #     }
+    # },
 
-    "Combat": {
-        "HealthBelow": {
-            "value": "float"
-        },
-        "HealthAbove": {
-            "value": "float"
-        },
-        "CooldownReady": {
-            "cooldownName": "string"
-        },
-        "HasAmmo": {},
-        "IsDead": {}
-    },
+    # "Combat": {
+    #     "HealthBelow": {
+    #         "value": "float"
+    #     },
+    #     "HealthAbove": {
+    #         "value": "float"
+    #     },
+    #     "CooldownReady": {
+    #         "cooldownName": "string"
+    #     },
+    #     "HasAmmo": {},
+    #     "IsDead": {}
+    # },
 
-    "Animation": {
-        "AnimationFinished": {
-            "animationName": "string"
-        },
-        "AnimationTimeGreater": {
-            "animationName": "string",
-            "normalizedTime": "float"
-        }
-    },
+    # "Animation": {
+    #     "AnimationFinished": {
+    #         "animationName": "string"
+    #     },
+    #     "AnimationTimeGreater": {
+    #         "animationName": "string",
+    #         "normalizedTime": "float"
+    #     }
+    # },
 
-    "Time": {
-        "TimerFinished": {
-            "timerName": "string"
-        },
-        "StateTimeGreater": {
-            "seconds": "float"
-        }
-    },
+    # "Time": {
+    #     "TimerFinished": {
+    #         "timerName": "string"
+    #     },
+    #     "StateTimeGreater": {
+    #         "seconds": "float"
+    #     }
+    # },
 
-    "Events": {
-        "EventReceived": {
-            "eventName": "string"
-        },
-        "FlagTriggered": {
-            "flagName": "string"
-        }
-    },
+    # "Events": {
+    #     "EventReceived": {
+    #         "eventName": "string"
+    #     },
+    #     "FlagTriggered": {
+    #         "flagName": "string"
+    #     }
+    # },
 
-    "Random": {
-        "RandomChance": {
-            "probability": "float"
-        }
-    }
+    # "Random": {
+    #     "RandomChance": {
+    #         "probability": "float"
+    #     }
+    # }
 }
 
 ALL_CONDITIONS = [
