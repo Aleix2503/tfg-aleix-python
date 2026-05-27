@@ -20,13 +20,13 @@ Run the setup script from the project directory (go to the root directory):
 
 ```bash
 cd path\to\tfg-aleix-python
-python build_config\setup.py
+python setup.py
 ```
 
 Or directly:
 
 ```bash
-python build_config/setup.py
+python setup.py
 ```
 
 This will:
