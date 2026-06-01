@@ -11,8 +11,6 @@ from pathlib import Path
 
 def build_executable():
     """Build the executable using PyInstaller"""
-    print("Building executable with PyInstaller...")
-
     # Get the directory of this script
     project_dir = Path(__file__).parent
     main_py = project_dir / "main.py"
@@ -35,24 +33,18 @@ def build_executable():
 
     try:
         result = subprocess.run(cmd, cwd=str(project_dir), check=True)
-        print("✓ Executable built successfully!")
         exe_path = project_dir / "dist" / "FSMEditor.exe"
         if exe_path.exists():
-            print(f"✓ Executable location: {exe_path}")
             return True
         else:
-            print("✗ Executable not found at expected location")
             return False
     except subprocess.CalledProcessError as e:
-        print(f"✗ Build failed: {e}")
         return False
     except FileNotFoundError:
-        print("✗ PyInstaller not found. Install it with: pip install pyinstaller")
         return False
 
 def register_file_association(exe_path):
     """Register .fsmproj files to open with the FSM Editor"""
-    print("\nRegistering file associations...")
 
     # Ensure exe_path is absolute
     exe_path = str(Path(exe_path).resolve())
@@ -76,46 +68,26 @@ def register_file_association(exe_path):
     for cmd in registry_commands:
         try:
             result = subprocess.run(cmd, shell=True, capture_output=True, check=False)
-            if result.returncode != 0:
-                print(f"⚠ Warning: Registry command may have failed: {cmd}")
-                print(f"  Error: {result.stderr.decode()}")
                 # Continue anyway, some commands might fail due to permissions
         except Exception as e:
-            print(f"⚠ Warning: {e}")
+            pass
 
-    print("✓ File association registered!")
-    print("  .fsmproj files should now open with FSM Editor when double-clicked")
     return True
 
 def main():
     """Main setup routine"""
-    print("=" * 60)
-    print("FSM Editor Framework - Setup & Build")
-    print("=" * 60)
-
     # Check if we're on Windows
-    if sys.platform != "win32":
-        print("⚠ This setup script is designed for Windows.")
-        print("  File association registration only works on Windows.")
+    if sys.platform == "win32":
+        # Build executable
+        if not build_executable():
+            return False
 
-    # Build executable
-    if not build_executable():
-        print("\n✗ Build failed. Please check the error messages above.")
-        return False
-
-    # Register file association
-    exe_path = Path(__file__).parent / "dist" / "FSMEditor.exe"
-    if exe_path.exists():
-        if sys.platform == "win32":
+        # Register file association
+        exe_path = Path(__file__).parent / "dist" / "FSMEditor.exe"
+        if exe_path.exists():
             register_file_association(str(exe_path))
-        print(f"\n✓ Setup complete!")
-        print(f"  Executable: {exe_path}")
-        print(f"  You can now:")
-        print(f"    - Run the executable directly")
-        print(f"    - Double-click .fsmproj files to open them")
-    else:
-        print("\n✗ Executable not found after build")
-        return False
+        else:
+            return False
 
     return True
 

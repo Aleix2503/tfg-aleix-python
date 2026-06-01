@@ -28,10 +28,8 @@ if len(sys.argv) > 1:
         window._update_window_title()
         window.command_manager.clear()
         window._update_undo_redo_state()
-
-        print(f"Archivo cargado: {file_path}")
     except Exception as e:
-        print(f"Error al cargar el archivo: {e}")
+        pass
 
 window.show()
 sys.exit(app.exec())

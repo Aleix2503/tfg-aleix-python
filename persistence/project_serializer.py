@@ -35,5 +35,3 @@ def save_project(fsm, scene, path):
 
     with open(path, "w", encoding="utf-8") as file:
         json.dump(data, file, indent=4)
-
-    print("Project saved:", path)

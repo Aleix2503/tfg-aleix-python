@@ -903,7 +903,6 @@ class Inspector(QWidget):
         parent_condition = item.condition_ref
 
         if not isinstance(parent_condition, LogicalCondition):
-            print("Only logical conditions can have children")
             return
 
         condition_type = self.cond_type.currentText()
@@ -924,7 +923,6 @@ class Inspector(QWidget):
         parent_condition = item.condition_ref
 
         if not isinstance(parent_condition, LogicalCondition):
-            print("Only logical conditions can have children")
             return
 
         new_condition = LogicalCondition(op, [])
@@ -1051,8 +1049,6 @@ class Inspector(QWidget):
         self.current_condition.params = params
 
         self.refresh_condition_tree()
-
-        print("Condition saved:", self.current_condition.to_dict())
     
     def remove_selected_condition(self):
         item = self.get_selected_condition_item()

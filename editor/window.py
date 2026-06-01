@@ -214,11 +214,7 @@ class MainWindow(QMainWindow):
         with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=4)
 
-        print("FSM exported to:", path)
-
     def new_fsm(self):
-        print("NEW FSM")
-
         # Cancelar creación de transición si estaba activa
         if self.graph.creating_transition:
             self.graph.end_transition_creation()
@@ -245,8 +241,6 @@ class MainWindow(QMainWindow):
         # Limpiar historial de undo/redo
         self.command_manager.clear()
         self._update_undo_redo_state()
-
-        print("New FSM created")
 
     def save_fsm(self):
         """Guarda el proyecto actual. Si no tiene ruta, abre diálogo"""
@@ -286,7 +280,6 @@ class MainWindow(QMainWindow):
         # Actualizar estado
         self.current_file_path = path
         self.mark_saved()
-        print(f"FSM saved to: {path}")
 
     def load_fsm(self):
         path, _ = QFileDialog.getOpenFileName(
@@ -321,5 +314,3 @@ class MainWindow(QMainWindow):
         # Limpiar historial de undo/redo
         self.command_manager.clear()
         self._update_undo_redo_state()
-
-        print("FSM loaded:", path)

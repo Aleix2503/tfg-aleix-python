@@ -160,10 +160,6 @@ class GraphView(QGraphicsView):
             return
 
         if self.transition_exists(source_node, target_node):
-            print(
-                f"Transition already exists: "
-                f"{source_node.state.id} -> {target_node.state.id}"
-            )
             return
 
         # Crear comando
