@@ -98,6 +98,9 @@ class MainWindow(QMainWindow):
         v_layout = QVBoxLayout()
 
         self.inspector = Inspector(on_change_callback=self.mark_modified)
+        # Clear inspector at startup so it shows empty
+        self.inspector.clear()
+
         self.graph = GraphView(
             inspector=self.inspector,
             fsm=self.fsm,

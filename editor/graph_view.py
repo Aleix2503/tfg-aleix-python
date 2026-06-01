@@ -195,16 +195,21 @@ class GraphView(QGraphicsView):
 
     def start_transition_creation(self, source_node):
         """Inicia el proceso de crear una transición"""
+        # First, clean up any existing temp line
+        if self.temp_line:
+            self.scene.removeItem(self.temp_line)
+            self.temp_line = None
+
         self.transition_source = source_node
         self.creating_transition = True
-        
+
         # Cambiar color a amarillo
         source_node.setBrush(Qt.yellow)
-        
+
         # Crear línea temporal
         source_pos = source_node.scenePos()
         source_center = source_pos + source_node.rect().center()
-        
+
         self.temp_line = QGraphicsLineItem()
         pen = QPen(QColor(255, 0, 0, 200))
         pen.setWidth(2)
@@ -218,17 +223,20 @@ class GraphView(QGraphicsView):
         )
         # Hacer que la línea no intercepte clicks
         self.temp_line.setAcceptedMouseButtons(Qt.NoButton)
+        # Set z-value above states
+        self.temp_line.setZValue(1)
         self.scene.addItem(self.temp_line)
 
     def end_transition_creation(self):
         """Termina el proceso de crear una transición"""
         if self.transition_source:
-            self.transition_source.setBrush(Qt.lightGray)
-        
+            # Restaurar el color original del estado
+            self.transition_source.update_appearance()
+
         if self.temp_line:
             self.scene.removeItem(self.temp_line)
             self.temp_line = None
-        
+
         self.transition_source = None
         self.creating_transition = False
 
@@ -288,22 +296,32 @@ class GraphView(QGraphicsView):
 
     def _create_state_at_impl(self, x, y, state_type="normal"):
         """Implementación interna de crear estado (sin comandos)"""
-        # Generar nombre único para el estado
+        # Generar nombre único para el estado basado en el tipo
         existing_states = {state.id for state in self.fsm.states}
-        counter = 1
-        while f"State_{counter}" in existing_states:
-            counter += 1
-
-        state_name = f"State_{counter}"
 
         if state_type == "global":
+            prefix = "Global_State_"
+            counter = 1
+            while f"{prefix}{counter}" in existing_states:
+                counter += 1
+            state_name = f"{prefix}{counter}"
             new_state = State(state_name, is_global_state=True)
         elif state_type == "entry":
+            prefix = "State_"
+            counter = 1
+            while f"{prefix}{counter}" in existing_states:
+                counter += 1
+            state_name = f"{prefix}{counter}"
             new_state = State(state_name, is_entry_point=True)
             # Si hay un entry point anterior, desactivarlo
             for state in self.fsm.states:
                 state.is_entry_point = False
         else:
+            prefix = "State_"
+            counter = 1
+            while f"{prefix}{counter}" in existing_states:
+                counter += 1
+            state_name = f"{prefix}{counter}"
             new_state = State(state_name)
 
         self.fsm.add_state(new_state)

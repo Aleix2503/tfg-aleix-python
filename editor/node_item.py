@@ -23,8 +23,11 @@ class StateNode(QGraphicsRectItem, QObject):
         self.setFlags(
             QGraphicsRectItem.ItemIsMovable |
             QGraphicsRectItem.ItemIsSelectable |
-            QGraphicsRectItem.ItemSendsGeometryChanges  
+            QGraphicsRectItem.ItemSendsGeometryChanges
         )
+
+        # Set z-order: states appear below transition lines
+        self.setZValue(0)
 
     def update_appearance(self):
         """Actualiza la apariencia del nodo basada en si es entry point, any state o global state"""
@@ -32,6 +35,8 @@ class StateNode(QGraphicsRectItem, QObject):
             # Any state es naranja
             self.setBrush(Qt.darkMagenta)
             self.text.setPlainText("ANY")
+            if hasattr(self, 'entry_indicator'):
+                self.entry_indicator.hide()
         elif self.state.is_global_state:
             self.setBrush(QColor(70, 130, 180))
             self.text.setPlainText(self.state.id)
@@ -40,12 +45,14 @@ class StateNode(QGraphicsRectItem, QObject):
         elif self.state.is_entry_point:
             self.setBrush(Qt.green)
             self.text.setPlainText(self.state.id)
-            # Crear círculo de entrada
+            # Crear o mostrar círculo de entrada
             if not hasattr(self, 'entry_indicator'):
                 self.entry_indicator = QGraphicsEllipseItem(self)
                 self.entry_indicator.setRect(-15, 10, 10, 10)
                 self.entry_indicator.setBrush(QBrush(QColor(0, 200, 0)))
                 self.entry_indicator.setPen(QPen(Qt.darkGreen))
+            else:
+                self.entry_indicator.show()
         else:
             self.setBrush(Qt.lightGray)
             self.text.setPlainText(self.state.id)
