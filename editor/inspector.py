@@ -443,8 +443,8 @@ class Inspector(QWidget):
             # Hide all other sections
             self._hide_all_sections()
             
-            # Mostrar un label informativo
-            self.any_state_info_label = QLabel("ANY_STATE: Transiciones globales que se pueden ejecutar desde cualquier estado.")
+            # Show informational label
+            self.any_state_info_label = QLabel("ANY_STATE: Global transitions that can be executed from any state.")
             self.any_state_info_label.setWordWrap(True)
             self.layout.insertWidget(1, self.any_state_info_label)
             return
@@ -456,7 +456,7 @@ class Inspector(QWidget):
 
         if node.state.is_global_state:
             self.global_state_info_label = QLabel(
-                "Global State: solo puede tener acciones en Tick. No permite transiciones de entrada ni salida."
+                "Global State: can only have actions in Tick. Does not allow incoming or outgoing transitions."
             )
             self.global_state_info_label.setWordWrap(True)
             self.layout.insertWidget(1, self.global_state_info_label)
@@ -522,8 +522,8 @@ class Inspector(QWidget):
             from PySide6.QtWidgets import QMessageBox
             QMessageBox.warning(
                 self,
-                "Acción no permitida",
-                "Los Global States solo pueden tener acciones en Tick."
+                "Action not allowed",
+                "Global States can only have actions in Tick."
             )
             return
 
@@ -823,7 +823,7 @@ class Inspector(QWidget):
         self.params_table.blockSignals(False)
 
     # ─────────────────────────────────────
-    # TRANSICIÓN
+    # TRANSITION
     # ─────────────────────────────────────
 
     def refresh_condition_tree(self):
@@ -986,7 +986,7 @@ class Inspector(QWidget):
                             completer = QCompleter(ALL_VARIABLES)
                             completer.setCaseSensitivity(Qt.CaseInsensitive)
                             widget.setCompleter(completer)
-                            widget.setPlaceholderText("Ej: distanceToPlayer, health, isGrounded")
+                            widget.setPlaceholderText("E.g.: distanceToPlayer, health, isGrounded")
 
                     row.addWidget(widget)
                     self.condition_params_layout.addLayout(row)
