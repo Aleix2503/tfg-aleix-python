@@ -232,6 +232,9 @@ class MainWindow(QMainWindow):
         # Reasignar FSM al GraphView
         self.graph.fsm = self.fsm
 
+        # Crear el nodo visual del ANY_STATE
+        self.graph.setup_any_state()
+
         # Limpiar inspector
         self.inspector.clear()
 
