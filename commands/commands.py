@@ -15,7 +15,7 @@ class CreateStateCommand(Command):
         self.node = None
 
     def execute(self):
-        # Usar la implementación interna para evitar recursión
+        # Use internal implementation to avoid recursion
         self.state, self.node = self.graph_view._create_state_at_impl(self.x, self.y, self.state_type)
 
     def undo(self):
@@ -30,7 +30,7 @@ class DeleteStateCommand(Command):
         self.fsm = fsm
         self.node = node
         self.graph_view = graph_view
-        # Guardar información del estado para poder recrearlo
+        # Save state information to recreate it
         self.state_data = {
             'id': node.state.id,
             'is_entry_point': node.state.is_entry_point,
@@ -80,7 +80,7 @@ class DeleteStateCommand(Command):
 
 
 class CreateTransitionCommand(Command):
-    """Comando para crear una transición"""
+    """Command to create a transition"""
 
     def __init__(self, fsm, graph_view, source_node, target_node):
         self.fsm = fsm
@@ -98,7 +98,7 @@ class CreateTransitionCommand(Command):
 
 
 class DeleteTransitionCommand(Command):
-    """Comando para eliminar una transición"""
+    """Command to delete a transition"""
 
     def __init__(self, fsm, graph_view, edge):
         self.fsm = fsm
@@ -116,7 +116,7 @@ class DeleteTransitionCommand(Command):
         self.graph_view._delete_edge_impl(self.edge)
 
     def undo(self):
-        # Recrear la transición
+        # Recreate the transition
         from model.transition import Transition
         from editor.edge_item import TransitionEdge
 

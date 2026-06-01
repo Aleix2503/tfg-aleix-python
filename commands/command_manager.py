@@ -2,35 +2,35 @@ from abc import ABC, abstractmethod
 
 
 class Command(ABC):
-    """Clase base para todos los comandos"""
+    """Base class for all commands"""
 
     @abstractmethod
     def execute(self):
-        """Ejecuta el comando"""
+        """Executes the command"""
         pass
 
     @abstractmethod
     def undo(self):
-        """Deshace el comando"""
+        """Undoes the command"""
         pass
 
 
 class CommandManager:
-    """Gestor de comandos para Undo/Redo"""
+    """Command manager for Undo/Redo"""
 
     def __init__(self):
         self.undo_stack = []
         self.redo_stack = []
 
     def execute(self, command):
-        """Ejecuta un comando y lo añade al stack de undo"""
+        """Executes a command and adds it to the undo stack"""
         command.execute()
         self.undo_stack.append(command)
-        # Limpiar redo stack cuando se ejecuta un comando nuevo
+        # Clear redo stack when a new command is executed
         self.redo_stack.clear()
 
     def undo(self):
-        """Deshace el último comando"""
+        """Undoes the last command"""
         if not self.can_undo():
             return
 
@@ -39,7 +39,7 @@ class CommandManager:
         self.redo_stack.append(command)
 
     def redo(self):
-        """Rehace el último comando deshecho"""
+        """Redoes the last undone command"""
         if not self.can_redo():
             return
 
@@ -48,14 +48,14 @@ class CommandManager:
         self.undo_stack.append(command)
 
     def can_undo(self):
-        """Retorna True si hay comandos para deshacer"""
+        """Returns True if there are commands to undo"""
         return len(self.undo_stack) > 0
 
     def can_redo(self):
-        """Retorna True si hay comandos para rehacer"""
+        """Returns True if there are commands to redo"""
         return len(self.redo_stack) > 0
 
     def clear(self):
-        """Limpia los stacks"""
+        """Clears the stacks"""
         self.undo_stack.clear()
         self.redo_stack.clear()

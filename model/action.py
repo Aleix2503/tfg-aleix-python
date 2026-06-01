@@ -1,11 +1,11 @@
 class Action:
     def __init__(self, name):
         self.name = name
-        self.params = []  # Lista de {"key": "", "value": ""}
+        self.params = []  # List of {"key": "", "value": ""}
 
     def add_parameter(self, key, value):
-        """Agregar un parámetro a la acción"""
-        # Evitar duplicados
+        """Add a parameter to the action"""
+        # Avoid duplicates
         for param in self.params:
             if param.get("key") == key:
                 param["value"] = value
@@ -13,14 +13,14 @@ class Action:
         self.params.append({"key": key, "value": value})
 
     def get_parameter(self, key):
-        """Obtener un parámetro específico"""
+        """Get a specific parameter"""
         for param in self.params:
             if param.get("key") == key:
                 return param.get("value")
         return None
 
     def remove_parameter(self, key):
-        """Eliminar un parámetro"""
+        """Remove a parameter"""
         self.params = [p for p in self.params if p.get("key") != key]
 
     def to_dict(self):

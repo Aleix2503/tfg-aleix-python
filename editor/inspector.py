@@ -41,23 +41,23 @@ class Inspector(QWidget):
         scroll_content = QWidget()
         self.layout = QVBoxLayout(scroll_content)
         
-        # Añadir el widget contenedor al QScrollArea
+        # Add container widget to QScrollArea
         scroll_area.setWidget(scroll_content)
         
-        # Añadir el QScrollArea al layout principal
+        # Add QScrollArea to main layout
         main_layout.addWidget(scroll_area)
         
         self.title = QLabel("Inspector")
         self.title.hide()
         self.layout.addWidget(self.title)
         
-        # Almacenar grupos de widgets por sección
+        # Store widget groups by section
         self.state_widgets = []
         self.transition_widgets = []
-        self.action_param_widgets = []  # Widgets que solo se muestran con acción seleccionada
+        self.action_param_widgets = []  # Widgets that are only shown when an action is selected
 
         # ─────────────────────────────────────
-        # SECCIÓN: ESTADO (STATE)
+        # SECTION: STATE (STATE)
         # ─────────────────────────────────────
 
         # --- STATE NAME ---
@@ -154,7 +154,7 @@ class Inspector(QWidget):
         self.layout.addWidget(self.action_params_label)
         self.action_param_widgets.append(self.action_params_label)
 
-        # Tabla de parámetros
+        # Parameters table
         self.params_table = QTableWidget()
         self.params_table.setColumnCount(2)
         self.params_table.setHorizontalHeaderLabels(["Name", "Value"])
@@ -163,7 +163,7 @@ class Inspector(QWidget):
         self.layout.addWidget(self.params_table)
         self.action_param_widgets.append(self.params_table)
 
-        # Botones para añadir/eliminar parámetros
+        # Buttons to add/delete parameters
         param_buttons = QHBoxLayout()
         self.param_add = QPushButton("+ Param")
         self.param_remove = QPushButton("- Param")
@@ -175,18 +175,18 @@ class Inspector(QWidget):
         self.param_add.clicked.connect(self.add_param)
         self.param_remove.clicked.connect(self.remove_param)
 
-        # Flag para rastrear si la tabla está conectada
+        # Flag to track if table is connected
         self.params_table_connected = True
         self.params_table.itemChanged.connect(self.on_param_table_changed)
 
-        # Layout de parámetros generados automáticamente
+        # Layout of auto-generated parameters
         self.params_layout = QVBoxLayout()
         self.layout.addLayout(self.params_layout)
         self.action_param_widgets.append(self.params_layout)
         self.param_widgets = {}
 
         # ─────────────────────────────────────
-        # SECCIÓN: TRANSICIÓN (TRANSITION)
+        # SECTION: TRANSITION (TRANSITION)
         # ─────────────────────────────────────
 
         self.cond_label = QLabel("Transition Condition Tree")
@@ -291,7 +291,7 @@ class Inspector(QWidget):
             lambda item: self.select_action("exit", item)
         )
 
-        # Flag para rastrear si la tabla está conectada
+        # Flag to track if table is connected
         self.params_table_connected = True
         self.params_table.itemChanged.connect(self.on_param_table_changed)
 
@@ -317,7 +317,7 @@ class Inspector(QWidget):
         self.title.hide()
 
     def _show_state_section(self):
-        """Muestra la sección de estado"""
+        """Shows the state section"""
 
         self._hide_all_sections()
         self.title.show()
@@ -332,7 +332,7 @@ class Inspector(QWidget):
                 widget.show()
 
     def _show_transition_section(self):
-        """Muestra la sección de transición"""
+        """Shows the transition section"""
 
         self._hide_all_sections()
         self.title.show()
@@ -347,7 +347,7 @@ class Inspector(QWidget):
                 widget.show()
 
     def _hide_action_params(self):
-        """Oculta los parámetros de la acción"""
+        """Hides the action parameters"""
         for widget in self.action_param_widgets:
             if isinstance(widget, QHBoxLayout) or isinstance(widget, QVBoxLayout):
                 for i in range(widget.count()):
@@ -358,7 +358,7 @@ class Inspector(QWidget):
                 widget.hide()
 
     def _show_action_params(self):
-        """Muestra los parámetros de la acción"""
+        """Shows the action parameters"""
         for widget in self.action_param_widgets:
             if isinstance(widget, QHBoxLayout) or isinstance(widget, QVBoxLayout):
                 for i in range(widget.count()):
@@ -386,7 +386,7 @@ class Inspector(QWidget):
         self.current_condition = None
         self.current_action = None
         
-        # Limpiar label del ANY_STATE si existe
+        # Clear ANY_STATE label if it exists
         if self.any_state_info_label is not None:
             self.layout.removeWidget(self.any_state_info_label)
             self.any_state_info_label.deleteLater()
@@ -440,7 +440,7 @@ class Inspector(QWidget):
         if node.state.is_any_state:
             self.title.setText("ANY_STATE")
             self.title.show()
-            # Ocultar todas las demás secciones
+            # Hide all other sections
             self._hide_all_sections()
             
             # Mostrar un label informativo
@@ -451,7 +451,7 @@ class Inspector(QWidget):
 
         self.title.setText(f"State: {node.state.id}")
         
-        # Mostrar sección de estado
+        # Show state section
         self._show_state_section()
 
         if node.state.is_global_state:
@@ -506,7 +506,7 @@ class Inspector(QWidget):
         # Actualizar el nodo visual
         self.current_node.text.setPlainText(new_name)
 
-        # Actualizar el título
+        # Update title
         self.title.setText(f"State: {new_name}")
 
     # ------------------------
@@ -517,7 +517,7 @@ class Inspector(QWidget):
         if not self.current_state:
             return
         
-        # No permitir añadir Enter/Exit a global states
+        # Do not allow adding Enter/Exit to global states
         if self.current_state.is_global_state and phase in ("enter", "exit"):
             from PySide6.QtWidgets import QMessageBox
             QMessageBox.warning(
@@ -545,7 +545,7 @@ class Inspector(QWidget):
         list_widget = getattr(self, f"{phase}_list")
         row = list_widget.currentRow()
 
-        # 🔥 CLAVE: comprobar selección válida
+        # 🔥 KEY: check valid selection
         if row < 0:
             return
 
@@ -572,13 +572,13 @@ class Inspector(QWidget):
         self.action_name_input.setText(self.current_action.name)
         self.action_name_input.blockSignals(False)
 
-        # Mostrar parámetros
+        # Show parameters
         self._show_action_params()
 
-        # Generar widgets automáticos primero
+        # Generate auto-widgets first
         self.generate_params_for_action(self.current_action.name)
 
-        # Cargar parámetros en la tabla DESPUÉS de generar los widgets
+        # Load parameters in table AFTER generating widgets
         self.refresh_params_table()
 
     def refresh(self):
@@ -598,11 +598,11 @@ class Inspector(QWidget):
 
         self.current_action.name = name
 
-        # Sincronizar PRIMERO los parámetros predefinidos desde los widgets
+        # Synchronize FIRST predefined parameters from widgets
         if self.param_widgets:
             self.sync_params_from_widgets()
 
-        # LUEGO sincronizar los parámetros personalizados desde la tabla
+        # THEN synchronize custom parameters from table
         self.sync_params_from_table()
 
         # Generar widgets tipados
@@ -611,33 +611,33 @@ class Inspector(QWidget):
         self.refresh()
 
     # ─────────────────────────────────────
-    # PARÁMETROS
+    # PARAMETERS
     # ─────────────────────────────────────
 
     def get_predefined_params(self, action_name):
-        """Obtiene los parámetros predefinidos de una acción del registro"""
+        """Gets the predefined parameters of an action from the registry"""
         for category in ACTION_REGISTRY.values():
             if action_name in category:
                 return category[action_name]
         return {}
 
     def generate_params_for_action(self, action_name):
-        # Limpiar layout anterior
+        # Clear previous layout
         self.clear_layout(self.params_layout)
 
         self.param_widgets = {}
 
-        # Obtener parámetros predefinidos
+        # Get predefined parameters
         predefined_params = self.get_predefined_params(action_name)
 
         if predefined_params:
-            # Hay parámetros predefinidos
+            # There are predefined parameters
             for param_name, param_type in predefined_params.items():
                 row = QHBoxLayout()
                 label = QLabel(param_name)
                 row.addWidget(label)
 
-                # Crear widget según tipo
+                # Create widget based on type
                 if param_type == "int":
                     widget = QSpinBox()
                     widget.setRange(-999999, 999999)
@@ -730,11 +730,11 @@ class Inspector(QWidget):
                 self.clear_layout(item.layout())
 
     # ─────────────────────────────────────
-    # PARÁMETROS PERSONALIZADOS
+    # PARAMETERS PERSONALIZADOS
     # ─────────────────────────────────────
 
     def add_param(self):
-        """Añade una fila vacía a la tabla de parámetros"""
+        """Adds an empty row to the parameters table"""
         if not self.current_action:
             return
 
@@ -744,7 +744,7 @@ class Inspector(QWidget):
         self.params_table.setItem(row, 1, QTableWidgetItem("value"))
 
     def remove_param(self):
-        """Elimina la fila seleccionada de la tabla de parámetros"""
+        """Removes the selected row from the parameters table"""
         if not self.current_action:
             return
 
@@ -756,32 +756,32 @@ class Inspector(QWidget):
         self.sync_params_from_table()
 
     def on_param_table_changed(self, item):
-        """Se ejecuta cuando cambia algo en la tabla de parámetros"""
+        """Executes when something changes in the parameters table"""
         self.sync_params_from_table()
         self._notify_change()
 
     def _notify_change(self):
-        """Notifica que hubo cambios"""
+        """Notifies that there were changes"""
         if self.on_change_callback:
             self.on_change_callback()
 
     def sync_params_from_table(self):
-        """Sincroniza los parámetros personalizados desde la tabla a la acción actual"""
+        """Syncs custom parameters from the table to the current action"""
         if not self.current_action:
             return
 
-        # Obtener los parámetros predefinidos
+        # Get predefined parameters
         predefined_params = self.get_predefined_params(self.current_action.name)
 
-        # Mantener los parámetros predefinidos existentes (convertir a lista si es necesario)
+        # Keep existing predefined parameters (convert to list if necessary)
         if isinstance(self.current_action.params, dict):
-            # Convertir diccionario antiguo a lista nueva
+            # Convert old dictionary to new list
             params = [{"key": k, "value": v} for k, v in self.current_action.params.items() if k in predefined_params]
         else:
-            # Ya es lista, mantener parámetros predefinidos
+            # Already a list, keep predefined parameters
             params = [p for p in self.current_action.params if p.get("key") in predefined_params]
 
-        # Agregar parámetros personalizados desde la tabla
+        # Add custom parameters from the table
         for row in range(self.params_table.rowCount()):
             name_item = self.params_table.item(row, 0)
             value_item = self.params_table.item(row, 1)
@@ -790,26 +790,26 @@ class Inspector(QWidget):
                 name = name_item.text().strip()
                 value = value_item.text().strip()
 
-                if name and name not in predefined_params:  # Solo agregar si no es predefinido
+                if name and name not in predefined_params:  # Only add if not predefined
                     params.append({"key": name, "value": value})
 
         self.current_action.params = params
 
     def refresh_params_table(self):
-        """Recarga la tabla de parámetros con los datos actuales (solo parámetros personalizados)"""
+        """Reloads the parameters table with current data (only custom parameters)"""
         self.params_table.blockSignals(True)
         self.params_table.setRowCount(0)
 
         if self.current_action and self.current_action.params:
-            # Obtener los parámetros predefinidos para esta acción
+            # Get predefined parameters for this action
             predefined_params = self.get_predefined_params(self.current_action.name)
 
-            # Convertir a lista si es diccionario antiguo
+            # Convert to list if old dictionary
             params = self.current_action.params
             if isinstance(params, dict):
                 params = [{"key": k, "value": v} for k, v in params.items()]
 
-            # Mostrar solo los parámetros que NO son predefinidos
+            # Show only parameters that are NOT predefined
             for param in params:
                 param_name = param.get("key") if isinstance(param, dict) else param
                 param_value = param.get("value") if isinstance(param, dict) else ""

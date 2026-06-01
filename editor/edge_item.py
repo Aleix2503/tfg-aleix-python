@@ -31,7 +31,7 @@ class TransitionEdge(QGraphicsPathItem):
         self._ensure_arrow_drawn()
 
     def _ensure_arrow_drawn(self):
-        """Asegura que la flecha se dibuje incluso si aún no se ha añadido a la escena"""
+        """Ensures the arrow is drawn even if not yet added to scene"""
         if self.arrow is None:
             # Trigger arrow drawing by re-calling update_position logic
             if self.is_self_transition():
@@ -52,11 +52,11 @@ class TransitionEdge(QGraphicsPathItem):
                 self.draw_arrow(p1, p2, has_reverse)
 
     def is_self_transition(self):
-        """Detecta si es una auto-transición (misma fuente y destino)"""
+        """Detects if this is a self-transition (same source and target)"""
         return self.source == self.target
 
     def has_reverse_transition(self):
-        """Detecta si existe una transición en dirección inversa"""
+        """Detects if there is a transition in the reverse direction"""
         for trans in self.source.edges:
             if hasattr(trans, 'target') and trans.target == self.source and \
                hasattr(trans, 'source') and trans.source == self.target:
@@ -70,44 +70,44 @@ class TransitionEdge(QGraphicsPathItem):
         p1_center = source_rect.center()
         p2_center = target_rect.center()
 
-        # Crear camino según tipo de transición
+        # Create path based on transition type
         path = QPainterPath()
 
-        # Detectar si es auto-transición
+        # Detect if it's a self-transition
         if self.is_self_transition():
-            # Dibujar un arco circular para la auto-transición
-            # El punto de salida es en el borde superior del nodo
+            # Draw a circular arc for self-transition
+            # Exit point at the top edge of the node
             rect = self.source.sceneBoundingRect()
             exit_point = QPointF(p1_center.x(), p1_center.y() - rect.height() / 2 - 10)
 
-            # Comenzar desde el borde del estado
+            # Start from the state edge
             path.moveTo(exit_point)
 
-            # Crear un arco que sale del nodo y vuelve
+            # Create an arc that goes out and comes back
             radius = 60
             arc_rect = QPointF(p1_center.x() - radius, p1_center.y() - radius - rect.height() / 2 - 10)
             path.arcTo(arc_rect.x(), arc_rect.y(), radius * 2, radius * 2, 90, -180)
 
-            # Dibujar flecha en el final del arco
+            # Draw arrow at the end of the arc
             arrow_end = QPointF(p1_center.x(), p1_center.y() - rect.height() / 2 - 10)
             self.draw_self_transition_arrow(path, arrow_end, p1_center)
         else:
-            # Detectar si hay transición inversa
+            # Check if there is a reverse transition
             has_reverse = self.has_reverse_transition()
 
-            # Calcular puntos de intersección en los bordes
+            # Calculate intersection points at state edges
             p1 = self._get_state_intersection(p2_center, p1_center, source_rect.width(), source_rect.height())
             p2 = self._get_state_intersection(p1_center, p2_center, target_rect.width(), target_rect.height())
 
             path.moveTo(p1)
 
             if has_reverse:
-                # Hacer una curva (arco)
-                # Calcular punto de control para la curva
+                # Create a curve (arc)
+                # Calculate control point for the curve
                 dx = p2.x() - p1.x()
                 dy = p2.y() - p1.y()
 
-                # Perpendicular al vector
+                # Perpendicular to the vector
                 perp_x = -dy
                 perp_y = dx
                 length = math.sqrt(perp_x*perp_x + perp_y*perp_y)
@@ -116,14 +116,14 @@ class TransitionEdge(QGraphicsPathItem):
                     perp_x /= length
                     perp_y /= length
 
-                # Punto de control desplazado
+                # Offset control point
                 offset = 30
                 control_x = (p1.x() + p2.x()) / 2 + perp_x * offset
                 control_y = (p1.y() + p2.y()) / 2 + perp_y * offset
 
                 path.quadTo(control_x, control_y, p2.x(), p2.y())
             else:
-                # Línea recta
+                # Straight line
                 path.lineTo(p2.x(), p2.y())
 
             self.draw_arrow(p1, p2, has_reverse)
@@ -131,27 +131,27 @@ class TransitionEdge(QGraphicsPathItem):
         self.setPath(path)
 
     def _get_state_intersection(self, center, target_center, rect_width, rect_height):
-        """Calcula el punto de intersección entre la línea y el borde del rectángulo del estado"""
+        """Calculates the intersection point between the line and state rectangle edge"""
         dx = target_center.x() - center.x()
         dy = target_center.y() - center.y()
 
         if dx == 0 and dy == 0:
             return target_center
 
-        # Calcular distancia
+        # Calculate distance
         distance = math.sqrt(dx * dx + dy * dy)
 
-        # Normalizar dirección
+        # Normalize direction
         dx_norm = dx / distance
         dy_norm = dy / distance
 
-        # El estado es un rectángulo, calcular el punto donde la línea toca el borde
-        # Usar la mitad del ancho y altura del rectángulo
+        # State is a rectangle, calculate where the line touches the edge
+        # Use half the width and height of the rectangle
         hw = rect_width / 2
         hh = rect_height / 2
 
-        # Encontrar el parámetro t donde la línea intersecta el rectángulo
-        # Basarse en cuál borde se toca primero
+        # Find parameter t where the line intersects the rectangle
+        # Check which edge is touched first
         if dx_norm != 0:
             t_x = hw / abs(dx_norm)
         else:
@@ -164,7 +164,7 @@ class TransitionEdge(QGraphicsPathItem):
 
         t = min(t_x, t_y)
 
-        # Punto de intersección
+        # Intersection point
         intersection = QPointF(
             target_center.x() - dx_norm * t,
             target_center.y() - dy_norm * t
@@ -173,30 +173,30 @@ class TransitionEdge(QGraphicsPathItem):
         return intersection
 
     def draw_self_transition_arrow(self, path, arrow_pos, node_center):
-        """Dibuja una flecha para auto-transiciones"""
-        # Eliminar flecha anterior si existe
+        """Draws an arrow for self-transitions"""
+        # Remove previous arrow if exists
         if self.arrow and self.arrow.scene():
             self.arrow.scene().removeItem(self.arrow)
 
-        # Para auto-transición, la flecha sale hacia abajo
-        # Dirección: de arriba hacia abajo
+        # For self-transition, arrow points downward
+        # Direction: top to bottom
         direction_x = 0
         direction_y = 1
 
-        # Punto donde empieza la flecha
+        # Point where arrow starts
         arrow_start_x = arrow_pos.x()
         arrow_start_y = arrow_pos.y() + 15
 
-        # Perpendicular para las alas de la flecha
+        # Perpendicular for arrow wings
         px = -direction_y
         py = direction_x
 
-        # Puntos de la flecha
+        # Arrow points
         p1 = QPointF(arrow_start_x, arrow_start_y)
         p2 = QPointF(arrow_start_x + px * 8, arrow_start_y + py * 8)
         p3 = QPointF(arrow_start_x - px * 8, arrow_start_y - py * 8)
 
-        # Crear polígono y dibujarlo
+        # Create and draw polygon
         polygon = QPolygonF([p1, p2, p3])
         self.arrow = QGraphicsPolygonItem(polygon)
         self.arrow.setBrush(Qt.black)
@@ -204,7 +204,7 @@ class TransitionEdge(QGraphicsPathItem):
         # Arrow should appear above states, same level as transition lines
         self.arrow.setZValue(1)
 
-        # Agregar a la escena - usar la escena del nodo source como fallback
+        # Add to scene - use source node's scene as fallback
         scene = self.scene()
         if not scene and self.source.scene():
             scene = self.source.scene()
@@ -213,21 +213,21 @@ class TransitionEdge(QGraphicsPathItem):
             scene.addItem(self.arrow)
 
     def draw_arrow(self, start, end, curved=False):
-        """Dibuja una flecha al final de la línea, posicionada en el borde del estado destino"""
-        # Eliminar flecha anterior si existe
+        """Draws an arrow at the end of the line, positioned at target state edge"""
+        # Remove previous arrow if exists
         if self.arrow and self.arrow.scene():
             self.arrow.scene().removeItem(self.arrow)
 
-        # Obtener el rectángulo del target
+        # Get target rectangle
         target_rect = self.target.sceneBoundingRect()
         target_center = target_rect.center()
         target_width = target_rect.width()
         target_height = target_rect.height()
 
-        # Calcular el punto de intersección con el borde del estado
+        # Calculate intersection point with state edge
         arrow_end = self._get_state_intersection(start, target_center, target_width, target_height)
 
-        # Calcular dirección
+        # Calculate direction
         dx = arrow_end.x() - start.x()
         dy = arrow_end.y() - start.y()
         length = math.sqrt(dx*dx + dy*dy)
@@ -235,24 +235,24 @@ class TransitionEdge(QGraphicsPathItem):
         if length == 0:
             return
 
-        # Normalizar
+        # Normalize
         dx /= length
         dy /= length
 
-        # Punto donde empieza la flecha (20 píxeles antes del punto de intersección)
+        # Point where arrow starts (20 pixels before intersection point)
         arrow_start_x = arrow_end.x() - dx * 20
         arrow_start_y = arrow_end.y() - dy * 20
 
-        # Perpendicular para las alas de la flecha
+        # Perpendicular for arrow wings
         px = -dy
         py = dx
 
-        # Puntos de la flecha
+        # Arrow points
         p1 = arrow_end
         p2 = QPointF(arrow_start_x + px * 8, arrow_start_y + py * 8)
         p3 = QPointF(arrow_start_x - px * 8, arrow_start_y - py * 8)
 
-        # Crear polígono y dibujarlo
+        # Create and draw polygon
         polygon = QPolygonF([p1, p2, p3])
         self.arrow = QGraphicsPolygonItem(polygon)
         self.arrow.setBrush(Qt.black)
@@ -260,7 +260,7 @@ class TransitionEdge(QGraphicsPathItem):
         # Arrow should appear above states, same level as transition lines
         self.arrow.setZValue(1)
 
-        # Agregar a la escena - usar la escena del nodo source como fallback
+        # Add to scene - use source node's scene as fallback
         scene = self.scene()
         if not scene and self.source.scene():
             scene = self.source.scene()

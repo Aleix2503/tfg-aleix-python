@@ -5,7 +5,7 @@ def save_project(fsm, scene, path):
 
     node_positions = {}
 
-    # Guardar posiciones visuales
+    # Save visual positions
     for item in scene.items():
 
         if isinstance(item, StateNode):
@@ -15,12 +15,12 @@ def save_project(fsm, scene, path):
                 "y": item.pos().y()
             }
 
-    # Preparar datos de FSM, excluyendo any_state
+    # Prepare FSM data, excluding any_state
     fsm_dict = fsm.to_dict()
     fsm_dict["states"] = [s for s in fsm_dict["states"] if not s.get("is_any_state", False)]
-    
-    # Filtrar transiciones que involucren any_state (opcional - permitir transiciones desde any_state)
-    # Por ahora, permitimos transiciones desde any_state pero no mostramos el any_state en el JSON
+
+    # Filter transitions involving any_state (optional - allow transitions from any_state)
+    # For now, we allow transitions from any_state but do not show any_state in the JSON
 
     data = {
         "project_version": "1.0",

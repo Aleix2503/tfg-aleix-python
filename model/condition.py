@@ -5,8 +5,8 @@ class Condition:
 
 class GenericCondition(Condition):
     """
-    Condición simple.
-    Ejemplos:
+    Simple condition.
+    Examples:
     - HasTarget
     - TargetInRange
     - HealthBelow
@@ -25,8 +25,8 @@ class GenericCondition(Condition):
 
 class LogicalCondition(Condition):
     """
-    Condición lógica.
-    Puede contener condiciones simples u otras condiciones lógicas.
+    Logical condition.
+    Can contain simple conditions or other logical conditions.
     """
     def __init__(self, op, conditions=None):
         self.type = op  # AND / OR / NOT
@@ -40,13 +40,13 @@ class LogicalCondition(Condition):
 
 
 def condition_from_dict(data):
-    """Reconstruye una condición desde su representación en diccionario"""
+    """Reconstructs a condition from its dictionary representation"""
     if not data:
         return None
-    
+
     condition_type = data.get("type")
-    
-    # Si tiene 'conditions', es una condición lógica
+
+    # If it has 'conditions', it is a logical condition
     if "conditions" in data:
         logical_cond = LogicalCondition(condition_type, [])
         for child_data in data.get("conditions", []):
@@ -55,7 +55,7 @@ def condition_from_dict(data):
                 logical_cond.conditions.append(child_cond)
         return logical_cond
     
-    # Si tiene 'params', es una condición genérica
+    # If it has 'params', it is a generic condition
     elif "params" in data:
         return GenericCondition(condition_type, data.get("params", {}))
     

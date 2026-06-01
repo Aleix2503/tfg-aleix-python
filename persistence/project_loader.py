@@ -17,18 +17,18 @@ def load_project(path, scene):
     fsm_data = data["fsm"]
     editor_data = data["editor"]
 
-    # Crear FSM nueva
+    # Create new FSM
     fsm = FSM(fsm_data["name"])
 
     node_map = {}
 
     # ─────────────────────────────────────
-    # ESTADOS
+    # STATES
     # ─────────────────────────────────────
 
-    # Cargar estados SIN is_entry_point para que FSM.add_state() los maneje
+    # Load states WITHOUT is_entry_point so that FSM.add_state() handles them
     for state_data in fsm_data["states"]:
-        # Ignorar el any_state si existe (se crea automáticamente)
+        # Ignore the any_state if it exists (it is created automatically)
         if state_data.get("is_any_state", False):
             continue
         
@@ -39,12 +39,12 @@ def load_project(path, scene):
             is_global_state=state_data.get("is_global_state", False)
         )
 
-        # Cargar acciones (convertir formato antiguo si es necesario)
+        # Load actions (convert old format if necessary)
         def load_action_params(action_data):
-            """Cargar parámetros en formato nuevo (array) o antiguo (dict)"""
+            """Load parameters in new format (array) or old format (dict)"""
             params = action_data.get("params", [])
 
-            # Si params es un diccionario (formato antiguo), convertir a array
+            # If params is a dictionary (old format), convert to array
             if isinstance(params, dict):
                 params = [{"key": k, "value": v} for k, v in params.items()]
 
@@ -65,9 +65,9 @@ def load_project(path, scene):
             action.params = load_action_params(action_data)
             state.exit.append(action)
 
-        fsm.states.append(state)  # Agregar directamente sin usar add_state()
+        fsm.states.append(state)  # Add directly without using add_state()
     
-    # Ahora establecer el entry point correcto
+    # Now set the correct entry point
     for state_data in fsm_data["states"]:
         if state_data.get("is_entry_point", False):
             for state in fsm.states:
@@ -75,21 +75,21 @@ def load_project(path, scene):
                     fsm.set_entry_point(state)
                     break
     
-    # Si no hay entry point y hay estados regulares, establecer el primero como entry point
+    # If there is no entry point and there are regular states, set the first one as entry point
     if fsm.get_entry_point() is None:
         regular_states = [s for s in fsm.states if not s.is_any_state and not s.is_global_state]
         if regular_states:
             fsm.set_entry_point(regular_states[0])
     
-    # Crear nodos visuales para todos los estados
+    # Create visual nodes for all states
     for state in fsm.states:
-        # Posición visual
+        # Visual position
         pos = editor_data["nodes"].get(state.id, {})
 
         x = pos.get("x", 0)
         y = pos.get("y", 0)
         
-        # Si es any_state y no tiene posición guardada, posicionarlo en esquina superior izquierda
+        # If it's any_state and has no saved position, position it in the upper left corner
         if state.is_any_state and not editor_data["nodes"].get(state.id):
             x = -50
             y = -50
@@ -111,7 +111,7 @@ def load_project(path, scene):
         node_map[state.id] = node
 
     # ─────────────────────────────────────
-    # TRANSICIONES
+    # TRANSITIONS
     # ─────────────────────────────────────
 
     for transition_data in fsm_data["transitions"]:
@@ -122,7 +122,7 @@ def load_project(path, scene):
         source_node = node_map[from_state]
         target_node = node_map[to_state]
 
-        # Deserializar condición
+        # Deserialize condition
         condition_data = transition_data.get("condition")
         condition = condition_from_dict(condition_data) if condition_data else None
 

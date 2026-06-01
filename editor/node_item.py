@@ -30,9 +30,9 @@ class StateNode(QGraphicsRectItem, QObject):
         self.setZValue(0)
 
     def update_appearance(self):
-        """Actualiza la apariencia del nodo basada en si es entry point, any state o global state"""
+        """Updates node appearance based on whether it's entry point, any state or global state"""
         if self.state.is_any_state:
-            # Any state es naranja
+            # Any state color
             self.setBrush(Qt.darkMagenta)
             self.text.setPlainText("ANY")
             if hasattr(self, 'entry_indicator'):
@@ -45,7 +45,7 @@ class StateNode(QGraphicsRectItem, QObject):
         elif self.state.is_entry_point:
             self.setBrush(Qt.green)
             self.text.setPlainText(self.state.id)
-            # Crear o mostrar círculo de entrada
+            # Create or show entry point indicator
             if not hasattr(self, 'entry_indicator'):
                 self.entry_indicator = QGraphicsEllipseItem(self)
                 self.entry_indicator.setRect(-15, 10, 10, 10)
@@ -67,7 +67,7 @@ class StateNode(QGraphicsRectItem, QObject):
             self.show_context_menu(event)
             return
         
-        # Si estamos creando transición y es click izquierdo
+        # If we are creating transition y es click izquierdo
         if self.view and self.view.creating_transition and event.button() == Qt.LeftButton:
             self.clicked_for_transition.emit()
             return
@@ -77,23 +77,23 @@ class StateNode(QGraphicsRectItem, QObject):
     def show_context_menu(self, event):
         menu = QMenu()
         if not self.state.is_global_state:
-            create_transition_action = menu.addAction("Crear transición")
+            create_transition_action = menu.addAction("Create transition")
         else:
             create_transition_action = None
-        
-        # Opción para establecer como entry point (solo si no es any_state y no es global_state)
+
+        # Option to set as entry point (only if not any_state and not global_state)
         if not self.state.is_any_state and not self.state.is_global_state:
             if self.state.is_entry_point:
-                entry_action = menu.addAction("✓ Es Entry Point")
+                entry_action = menu.addAction("✓ Is Entry Point")
                 entry_action.setEnabled(False)
             else:
-                entry_action = menu.addAction("Establecer como Entry Point")
+                entry_action = menu.addAction("Set as Entry Point")
         else:
             entry_action = None
         
-        # Opción para eliminar (solo si no es any_state)
+        # Option to delete (only if not any_state)
         if not self.state.is_any_state:
-            delete_action = menu.addAction("Eliminar estado")
+            delete_action = menu.addAction("Delete state")
         else:
             delete_action = None
         
@@ -104,28 +104,28 @@ class StateNode(QGraphicsRectItem, QObject):
         elif action == entry_action and not self.state.is_entry_point:
             self.set_as_entry_point()
         elif action == delete_action:
-            # Pedir a la vista que elimine este nodo
+            # Ask the view to delete this node
             if self.view:
                 self.view.delete_state(self)
 
     def set_as_entry_point(self):
-        """Establece este estado como entry point"""
+        """Sets this state as entry point"""
         if self.view and self.view.fsm:
-            # Actualizar en el modelo
+            # Update in the model
             self.view.fsm.set_entry_point(self.state)
-            
-            # Actualizar apariencia de todos los nodos
+
+            # Update appearance of all nodes
             for item in self.view.scene.items():
                 if isinstance(item, StateNode):
                     item.update_appearance()
 
     def itemChange(self, change, value):
-        if change == QGraphicsRectItem.ItemPositionHasChanged:  
+        if change == QGraphicsRectItem.ItemPositionHasChanged:
             for edge in self.edges:
                 edge.update_position()
 
         return super().itemChange(change, value)
 
     def contextMenuEvent(self, event):
-        # El menú contextual es manejado por mousePressEvent
+        # Context menu is handled by mousePressEvent
         pass

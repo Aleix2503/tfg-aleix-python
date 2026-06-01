@@ -14,10 +14,10 @@ class MainWindow(QMainWindow):
 
         self.fsm = fsm
         self.is_modified = False
-        self.current_file_path = None  # Para rastrear el archivo actual
-        self.command_manager = CommandManager()  # Gestor de Undo/Redo
+        self.current_file_path = None  # Track current file
+        self.command_manager = CommandManager()  # Undo/Redo manager
 
-        self._update_window_title()  # Inicializar con título correcto
+        self._update_window_title()  # Initialize with correct title
         self.resize(1100, 600)
 
 
@@ -27,7 +27,7 @@ class MainWindow(QMainWindow):
 
         menu_bar = self.menuBar()
 
-        # Menú File
+        # File Menu
         file_menu = menu_bar.addMenu("File")
 
         # Actions
@@ -44,7 +44,7 @@ class MainWindow(QMainWindow):
         load_fsm_action.setShortcut("Ctrl+O")
         export_json_action.setShortcut("Ctrl+E")
 
-        # Añadir acciones al menú
+        # Add actions to menu
         file_menu.addAction(new_fsm_action)
         file_menu.addAction(save_fsm_action)
         file_menu.addAction(save_fsm_as_action)
@@ -52,7 +52,7 @@ class MainWindow(QMainWindow):
         file_menu.addSeparator()
         file_menu.addAction(export_json_action)
 
-        # Conectar acciones
+        # Connect actions
         new_fsm_action.triggered.connect(self.new_fsm)
         save_fsm_action.triggered.connect(self.save_fsm)
         save_fsm_as_action.triggered.connect(self.save_fsm_as)
@@ -73,11 +73,11 @@ class MainWindow(QMainWindow):
         undo_action.setShortcut("Ctrl+Z")
         redo_action.setShortcut("Ctrl+Shift+Z")
 
-        # Añadir acciones al menú
+        # Add actions to menu
         edit_menu.addAction(undo_action)
         edit_menu.addAction(redo_action)
 
-        # Conectar acciones
+        # Connect actions
         undo_action.triggered.connect(self.undo)
         redo_action.triggered.connect(self.redo)
 
@@ -94,7 +94,7 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
         central.setLayout(layout)
 
-        #Layout secundario para botón de exportar
+        # Secondary layout for export button
         v_layout = QVBoxLayout()
 
         self.inspector = Inspector(on_change_callback=self.mark_modified)
@@ -115,52 +115,52 @@ class MainWindow(QMainWindow):
         layout.addLayout(v_layout, 3)
         layout.addWidget(self.inspector, 1)
 
-        # Conectar cambios en el inspector y graph para detectar modificaciones
+        # Connect changes in inspector and graph to detect modifications
         self._connect_change_signals()
 
     def _connect_change_signals(self):
-        """Conecta señales de cambio para detectar modificaciones"""
-        # Cuando se selecciona un elemento, se pueden hacer cambios
-        # Por ahora, confiaremos en que el usuario marca los cambios manualmente
-        # pero podemos extender esto si es necesario
+        """Connects change signals to detect modifications"""
+        # When an element is selected, changes can be made
+        # For now, we rely on user manually marking changes
+        # but we can extend this if needed
         pass
 
     def undo(self):
-        """Deshace la última acción"""
+        """Undoes the last action"""
         self.command_manager.undo()
         self._update_undo_redo_state()
         self.mark_modified()
 
     def redo(self):
-        """Rehace la última acción deshecha"""
+        """Redoes the last undone action"""
         self.command_manager.redo()
         self._update_undo_redo_state()
         self.mark_modified()
 
     def _update_undo_redo_state(self):
-        """Actualiza el estado de los botones Undo/Redo"""
+        """Updates the state of Undo/Redo buttons"""
         self.undo_action.setEnabled(self.command_manager.can_undo())
         self.redo_action.setEnabled(self.command_manager.can_redo())
 
     def mark_modified(self):
-        """Marca el proyecto como modificado"""
+        """Marks the project as modified"""
         if not self.is_modified:
             self.is_modified = True
             self._update_window_title()
 
     def mark_saved(self):
-        """Marca el proyecto como guardado"""
+        """Marks the project as saved"""
         self.is_modified = False
         self._update_window_title()
-        # Limpiar el historial de undo/redo al guardar (opcional)
+        # Clear undo/redo history when saving (opcional)
         # self.command_manager.clear()
 
     def _update_window_title(self):
-        """Actualiza el título de la ventana con el indicador de cambios"""
+        """Updates the window title with the modification indicator"""
         if self.current_file_path:
             import os
             filename = os.path.basename(self.current_file_path)
-            # Remover extensión .fsmproj
+            # Remove .fsmproj extension
             if filename.endswith(".fsmproj"):
                 filename = filename[:-8]
             title = f"FSM - {filename}"
@@ -173,18 +173,18 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(title)
 
     def closeEvent(self, event):
-        """Previene cerrar sin guardar si hay cambios"""
+        """Prevents closing without saving if there are changes"""
         if self.is_modified:
             reply = QMessageBox.question(
                 self,
-                "Cambios sin guardar",
-                "Hay cambios sin guardar. ¿Deseas guardarlos antes de cerrar?",
+                "Unsaved changes",
+                "There are unsaved changes. Do you want to save them before closing?",
                 QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel
             )
 
             if reply == QMessageBox.Save:
                 self.save_fsm()
-                if self.is_modified:  # Si no se guardó (usuario canceló), no cerrar
+                if self.is_modified:  # If not saved (user canceled), do not close
                     event.ignore()
                 else:
                     event.accept()
@@ -215,44 +215,44 @@ class MainWindow(QMainWindow):
             json.dump(data, f, indent=4)
 
     def new_fsm(self):
-        # Cancelar creación de transición si estaba activa
+        # Cancel transition creation if active
         if self.graph.creating_transition:
             self.graph.end_transition_creation()
 
-        # Limpiar escena visual
+        # Clear visual scene
         self.graph.scene.clear()
 
-        # Crear nueva FSM vacía
+        # Create new empty FSM
         self.fsm = FSM("NewFSM")
 
-        # Reasignar FSM al GraphView
+        # Reassign FSM to GraphView
         self.graph.fsm = self.fsm
 
-        # Crear el nodo visual del ANY_STATE
+        # Create the visual node for ANY_STATE
         self.graph.setup_any_state()
 
-        # Limpiar inspector
+        # Clear inspector
         self.inspector.clear()
 
-        # Resetear estado de modificación
+        # Reset modification state
         self.current_file_path = None
-        self.mark_saved()  # Nuevo proyecto sin cambios
+        self.mark_saved()  # New project with no changes
 
-        # Limpiar historial de undo/redo
+        # Clear undo/redo history
         self.command_manager.clear()
         self._update_undo_redo_state()
 
     def save_fsm(self):
-        """Guarda el proyecto actual. Si no tiene ruta, abre diálogo"""
+        """Saves current project. If no path, opens dialog"""
         if self.current_file_path:
-            # Guardar directamente en el archivo actual
+            # Save directly to the current file
             self._save_to_path(self.current_file_path)
         else:
-            # Si no hay ruta, abrir diálogo "Guardar Como"
+            # If no path, open "Save As" dialog
             self.save_fsm_as()
 
     def save_fsm_as(self):
-        """Abre diálogo para guardar con un nuevo nombre/ubicación"""
+        """Opens dialog to save with a new name/location"""
         path, _ = QFileDialog.getSaveFileName(
             self,
             "Save FSM Project As",
@@ -263,21 +263,21 @@ class MainWindow(QMainWindow):
         if not path:
             return
 
-        # Añadir extensión si falta
+        # Add extension if missing
         if not path.endswith(".fsmproj"):
             path += ".fsmproj"
 
         self._save_to_path(path)
 
     def _save_to_path(self, path):
-        """Guarda el proyecto en la ruta especificada"""
+        """Saves the project at the specified path"""
         save_project(
             self.fsm,
             self.graph.scene,
             path
         )
 
-        # Actualizar estado
+        # Update state
         self.current_file_path = path
         self.mark_saved()
 
@@ -292,25 +292,25 @@ class MainWindow(QMainWindow):
         if not path:
             return
 
-        # Limpiar escena actual
+        # Clear current scene
         self.graph.scene.clear()
 
-        # Cargar FSM
+        # Load FSM
         self.fsm = load_project(
             path,
             self.graph.scene
         )
 
-        # Reasignar referencia
+        # Reassign reference
         self.graph.fsm = self.fsm
 
-        # Limpiar inspector
+        # Clear inspector
         self.inspector.clear()
 
-        # Actualizar estado
+        # Update state
         self.current_file_path = path
-        self.mark_saved()  # Proyecto recién cargado, sin cambios
+        self.mark_saved()  # Newly loaded project, no changes
 
-        # Limpiar historial de undo/redo
+        # Clear undo/redo history
         self.command_manager.clear()
         self._update_undo_redo_state()

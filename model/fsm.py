@@ -6,12 +6,12 @@ class FSM:
         self.states = []
         self.transitions = []
         
-        # Crear el any_state automáticamente
+        # Create the any_state automatically
         any_state = State("ANY_STATE", is_any_state=True)
         self.states.append(any_state)
 
     def add_state(self, state):
-        # El primer estado regular (no any_state, no global_state) es automáticamente entry point
+        # The first regular state (non any_state, non global_state) is automatically the entry point
         if not state.is_any_state and not state.is_global_state:
             regular_states = [s for s in self.states if not s.is_any_state and not s.is_global_state]
             if len(regular_states) == 0:
@@ -19,20 +19,20 @@ class FSM:
         self.states.append(state)
 
     def set_entry_point(self, state):
-        """Establece un estado como entry point y desactiva los demás"""
+        """Sets a state as the entry point and deactivates others"""
         for s in self.states:
             s.is_entry_point = False
         state.is_entry_point = True
 
     def get_entry_point(self):
-        """Obtiene el estado entry point"""
+        """Gets the entry point state"""
         for state in self.states:
             if state.is_entry_point:
                 return state
         return None
     
     def get_any_state(self):
-        """Obtiene el any_state"""
+        """Gets the any_state"""
         for state in self.states:
             if state.is_any_state:
                 return state

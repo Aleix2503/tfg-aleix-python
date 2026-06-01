@@ -7,20 +7,20 @@ from persistence.project_loader import load_project
 
 app = QApplication(sys.argv)
 
-# Crear FSM inicial
+# Create initial FSM
 fsm = FSM("FSM")
 
-# Ventana
+# Window
 window = MainWindow(fsm)
 
-# Si se pasó un archivo como argumento, cargarlo
+# If a file was passed as an argument, load it
 if len(sys.argv) > 1:
     file_path = sys.argv[1]
     try:
-        # Limpiar escena
+        # Clear scene
         window.graph.scene.clear()
 
-        # Cargar proyecto
+        # Load project
         fsm = load_project(file_path, window.graph.scene)
         window.fsm = fsm
         window.graph.fsm = fsm

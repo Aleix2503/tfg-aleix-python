@@ -23,7 +23,7 @@ class GraphView(QGraphicsView):
 
         self.scene.selectionChanged.connect(self.on_selection_changed)
 
-        # Estado para crear transiciones
+        # State for transition creation
         self.transition_source = None
         self.temp_line = None
         self.creating_transition = False
@@ -35,30 +35,30 @@ class GraphView(QGraphicsView):
             self.setup_any_state()
 
     def setup_any_state(self):
-        """Crea el nodo visual del any_state en la esquina superior izquierda"""
+        """Creates the visual node of any_state in the upper left corner"""
         if not self.fsm:
             return
-        
+
         any_state = self.fsm.get_any_state()
         if any_state:
-            # Verificar si ya existe el nodo visual
+            # Check if visual node already exists
             for item in self.scene.items():
                 if isinstance(item, StateNode) and item.state.is_any_state:
-                    return  # Ya existe
-            
-            # Crear nodo visual en la esquina superior izquierda
+                    return  # Already exists
+
+            # Create visual node in upper left corner
             node = StateNode(any_state, view=self)
-            node.setPos(-50, -50)  # Esquina superior izquierda
+            node.setPos(-50, -50)  # Upper left corner
             node.update_appearance()
             
-            # Conectar señales
+            # Connect signals
             node.create_transition_requested.connect(
                 lambda: self.start_transition_creation(node)
             )
             node.clicked_for_transition.connect(
                 lambda: self.complete_transition(node)
             )
-            
+
             self.scene.addItem(node)
 
     def on_selection_changed(self):
@@ -72,24 +72,24 @@ class GraphView(QGraphicsView):
             self.inspector.clear()
 
     def mousePressEvent(self, event):
-        # Obtener todos los items en esa posición
+        # Get all items at that position
         scene_pos = self.mapToScene(event.pos())
         items_at_pos = self.scene.items(scene_pos)
-        
-        # Filtrar solo StateNode
+
+        # Filter only StateNode
         state_nodes = [item for item in items_at_pos if isinstance(item, StateNode)]
         item = state_nodes[0] if state_nodes else None
 
-        # Si estamos creando transición
+        # If we're creating transition
         if self.creating_transition:
             if item:
-                # Click izquierdo en destino válido
+                # Left click on valid target
                 if event.button() == Qt.LeftButton:
                     self.create_transition(self.transition_source, item)
                     self.end_transition_creation()
                     return
             elif event.button() == Qt.LeftButton:
-                # Click izquierdo fuera de estado válido = cancelar
+                # Left click outside valid state = cancel
                 self.end_transition_creation()
                 return
 
@@ -103,14 +103,14 @@ class GraphView(QGraphicsView):
         return False
 
     def mouseMoveEvent(self, event):
-        # Si estamos creando transición, actualizar la línea temporal
+        # If we're creating transition, update temporary line
         if self.creating_transition and self.transition_source and self.temp_line:
             scene_pos = self.mapToScene(event.pos())
-            # Obtener el centro del estado origen
+            # Get center of source state
             source_pos = self.transition_source.scenePos()
             source_center = source_pos + self.transition_source.rect().center()
-            
-            # Actualizar la línea
+
+            # Update line
             self.temp_line.setLine(
                 source_center.x(),
                 source_center.y(),
@@ -121,12 +121,12 @@ class GraphView(QGraphicsView):
         super().mouseMoveEvent(event)
 
     def keyPressEvent(self, event):
-        # Escape cancela la creación de transición
+        # Escape cancels transition creation
         if event.key() == Qt.Key_Escape and self.creating_transition:
             self.end_transition_creation()
             return
 
-        # Suprimir / Delete: eliminar items seleccionados
+        # Delete / Backspace: delete selected items
         if event.key() in (Qt.Key_Delete, Qt.Key_Backspace):
             selected = list(self.scene.selectedItems())
             for it in selected:
@@ -141,31 +141,31 @@ class GraphView(QGraphicsView):
     def create_transition(self, source_node, target_node):
         from commands import CreateTransitionCommand
 
-        # No permitir transiciones hacia ANY_STATE
+        # Don't allow transitions to ANY_STATE
         if target_node.state.is_any_state:
             from PySide6.QtWidgets import QMessageBox
-            QMessageBox.warning(self, "Transición Inválida",
-                              "No se pueden crear transiciones hacia ANY_STATE. Solo puedes crear transiciones DESDE ANY_STATE.")
+            QMessageBox.warning(self, "Invalid Transition",
+                              "Cannot create transitions to ANY_STATE. You can only create transitions FROM ANY_STATE.")
             return
 
-        # No permitir transiciones desde o hacia global_state
+        # Don't allow transitions from or to global_state
         if source_node.state.is_global_state or target_node.state.is_global_state:
             from PySide6.QtWidgets import QMessageBox
             QMessageBox.warning(
                 self,
-                "Transición Inválida",
-                "No se pueden crear transiciones desde ni hacia un Global State. "
-                "Los Global States solo ejecutan acciones en tick."
+                "Invalid Transition",
+                "Cannot create transitions from or to a Global State. "
+                "Global States only execute actions per tick."
             )
             return
 
         if self.transition_exists(source_node, target_node):
             return
 
-        # Crear comando
+        # Create command
         command = CreateTransitionCommand(self.fsm, self, source_node, target_node)
 
-        # Ejecutar a través del command_manager
+        # Execute through command_manager
         if self.command_manager:
             self.command_manager.execute(command)
             if self.on_command_executed:
@@ -173,12 +173,12 @@ class GraphView(QGraphicsView):
         else:
             command.execute()
 
-        # Notificar que hay cambios
+        # Notify that there are changes
         if self.on_change_callback:
             self.on_change_callback()
 
     def _create_transition_impl(self, source_node, target_node):
-        """Implementación interna de crear transición (sin comandos)"""
+        """Internal implementation of transition creation (without commands)"""
         transition = Transition(source_node.state, target_node.state)
         self.fsm.add_transition(transition)
 
@@ -190,7 +190,7 @@ class GraphView(QGraphicsView):
         return edge
 
     def start_transition_creation(self, source_node):
-        """Inicia el proceso de crear una transición"""
+        """Starts the transition creation process"""
         # First, clean up any existing temp line
         if self.temp_line:
             self.scene.removeItem(self.temp_line)
@@ -199,10 +199,10 @@ class GraphView(QGraphicsView):
         self.transition_source = source_node
         self.creating_transition = True
 
-        # Cambiar color a amarillo
+        # Change color to yellow
         source_node.setBrush(Qt.yellow)
 
-        # Crear línea temporal
+        # Create temporary line
         source_pos = source_node.scenePos()
         source_center = source_pos + source_node.rect().center()
 
@@ -217,16 +217,16 @@ class GraphView(QGraphicsView):
             source_center.x(),
             source_center.y()
         )
-        # Hacer que la línea no intercepte clicks
+        # Make line not intercept clicks
         self.temp_line.setAcceptedMouseButtons(Qt.NoButton)
         # Set z-value above states
         self.temp_line.setZValue(1)
         self.scene.addItem(self.temp_line)
 
     def end_transition_creation(self):
-        """Termina el proceso de crear una transición"""
+        """Ends the transition creation process"""
         if self.transition_source:
-            # Restaurar el color original del estado
+            # Restore original state color
             self.transition_source.update_appearance()
 
         if self.temp_line:
@@ -237,7 +237,7 @@ class GraphView(QGraphicsView):
         self.creating_transition = False
 
     def complete_transition(self, target_node):
-        """Completa la transición al hacer click en el nodo destino"""
+        """Completes transition when clicking on target node"""
         if not self.creating_transition or not self.transition_source:
             return
         
@@ -248,15 +248,15 @@ class GraphView(QGraphicsView):
 
     def contextMenuEvent(self, event):
         item = self.itemAt(event.pos())
-        
-        # Solo mostrar menú si no hay un nodo bajo el cursor
+
+        # Only show menu if there's no node under cursor
         if item and isinstance(item, StateNode):
             return
-        
+
         menu = QMenu()
-        create_state_action = menu.addAction("Crear nuevo estado")
-        create_entry_action = menu.addAction("Crear Entry Point")
-        create_global_action = menu.addAction("Crear Global State")
+        create_state_action = menu.addAction("Create new state")
+        create_entry_action = menu.addAction("Create Entry Point")
+        create_global_action = menu.addAction("Create Global State")
         
         action = menu.exec(event.globalPos())
         
@@ -273,26 +273,26 @@ class GraphView(QGraphicsView):
     def create_state_at(self, x, y):
         from commands import CreateStateCommand
 
-        # Crear comando
+        # Create command
         command = CreateStateCommand(self.fsm, self, x, y, "normal")
 
-        # Ejecutar a través del command_manager
+        # Execute through command_manager
         if self.command_manager:
             self.command_manager.execute(command)
-            # Notificar que se ejecutó un comando
+            # Notify that command was executed
             if self.on_command_executed:
                 self.on_command_executed()
         else:
-            # Fallback si no hay command_manager
+            # Fallback if no command_manager
             command.execute()
 
-        # Notificar que hay cambios
+        # Notify that there are changes
         if self.on_change_callback:
             self.on_change_callback()
 
     def _create_state_at_impl(self, x, y, state_type="normal"):
-        """Implementación interna de crear estado (sin comandos)"""
-        # Generar nombre único para el estado basado en el tipo
+        """Internal implementation of state creation (without commands)"""
+        # Generate unique name for state based on type
         existing_states = {state.id for state in self.fsm.states}
 
         if state_type == "global":
@@ -309,7 +309,7 @@ class GraphView(QGraphicsView):
                 counter += 1
             state_name = f"{prefix}{counter}"
             new_state = State(state_name, is_entry_point=True)
-            # Si hay un entry point anterior, desactivarlo
+            # If there's a previous entry point, deactivate it
             for state in self.fsm.states:
                 state.is_entry_point = False
         else:
@@ -322,12 +322,12 @@ class GraphView(QGraphicsView):
 
         self.fsm.add_state(new_state)
 
-        # Crear nodo visual (pasar referencia a la vista)
+        # Create visual node (pass reference to view)
         node = StateNode(new_state, view=self)
         node.setPos(x, y)
         node.update_appearance()
 
-        # Conectar señales
+        # Connect signals
         node.create_transition_requested.connect(
             lambda: self.start_transition_creation(node)
         )
@@ -337,7 +337,7 @@ class GraphView(QGraphicsView):
 
         self.scene.addItem(node)
 
-        # Si es entry point, actualizar apariencia de otros nodos
+        # If entry point, update appearance of other nodes
         if state_type == "entry":
             for item in self.scene.items():
                 if isinstance(item, StateNode) and item != node:
@@ -346,13 +346,13 @@ class GraphView(QGraphicsView):
         return new_state, node
 
     def create_global_state_at(self, x, y):
-        """Crea un estado global sin transiciones en la posición especificada"""
+        """Creates a global state without transitions at specified position"""
         from commands import CreateStateCommand
 
         # Crear comando
         command = CreateStateCommand(self.fsm, self, x, y, "global")
 
-        # Ejecutar a través del command_manager
+        # Execute through command_manager
         if self.command_manager:
             self.command_manager.execute(command)
             if self.on_command_executed:
@@ -365,13 +365,13 @@ class GraphView(QGraphicsView):
             self.on_change_callback()
 
     def create_entry_point_at(self, x, y):
-        """Crea un nuevo entry point en la posición especificada"""
+        """Creates a new entry point at specified position"""
         from commands import CreateStateCommand
 
         # Crear comando
         command = CreateStateCommand(self.fsm, self, x, y, "entry")
 
-        # Ejecutar a través del command_manager
+        # Execute through command_manager
         if self.command_manager:
             self.command_manager.execute(command)
             if self.on_command_executed:
@@ -384,20 +384,20 @@ class GraphView(QGraphicsView):
             self.on_change_callback()
 
     def delete_state(self, node):
-        """Elimina un estado, sus aristas y las transiciones asociadas del modelo y la escena."""
+        """Deletes a state, its edges and associated transitions from model and scene."""
         from commands import DeleteStateCommand
 
-        # No permitir eliminar any_state
+        # Don't allow deleting any_state
         if node.state.is_any_state:
             from PySide6.QtWidgets import QMessageBox
-            QMessageBox.warning(self, "No se puede eliminar",
-                              "El ANY_STATE no se puede eliminar. Es fundamental para transiciones globales.")
+            QMessageBox.warning(self, "Cannot delete",
+                              "ANY_STATE cannot be deleted. It's essential for global transitions.")
             return
 
-        # Crear comando
+        # Create command
         command = DeleteStateCommand(self.fsm, node, self)
 
-        # Ejecutar a través del command_manager
+        # Execute through command_manager
         if self.command_manager:
             self.command_manager.execute(command)
             if self.on_command_executed:
@@ -405,21 +405,21 @@ class GraphView(QGraphicsView):
         else:
             command.execute()
 
-        # Si se eliminó el entry point, mostrar advertencia
+        # If entry point was deleted, show warning
         if node.state.is_entry_point:
             from PySide6.QtWidgets import QMessageBox
-            QMessageBox.warning(self, "Entry Point Eliminado",
-                              "El Entry Point ha sido eliminado. La FSM ahora no tiene punto de entrada.")
+            QMessageBox.warning(self, "Entry Point Deleted",
+                              "The Entry Point has been deleted. The FSM now has no entry point.")
 
-        # Notificar que hay cambios
+        # Notify that there are changes
         if self.on_change_callback:
             self.on_change_callback()
 
     def _delete_state_impl(self, node):
-        """Implementación interna de eliminar estado (sin comandos)"""
-        # Eliminar aristas conectadas
+        """Internal implementation of state deletion (without commands)"""
+        # Delete connected edges
         for edge in list(node.edges):
-            # Quitar referencia en nodos fuente/target
+            # Remove reference in source/target nodes
             try:
                 if edge in edge.source.edges:
                     edge.source.edges.remove(edge)
@@ -431,35 +431,35 @@ class GraphView(QGraphicsView):
             except Exception:
                 pass
 
-            # Eliminar la transición del modelo
+            # Delete transition from model
             try:
                 if edge.transition in self.fsm.transitions:
                     self.fsm.transitions.remove(edge.transition)
             except Exception:
                 pass
 
-            # Eliminar la flecha asociada si existe
+            # Delete associated arrow if exists
             try:
                 if hasattr(edge, 'arrow') and edge.arrow and edge.arrow.scene():
                     self.scene.removeItem(edge.arrow)
             except Exception:
                 pass
 
-            # Eliminar la arista de la escena
+            # Delete edge from scene
             try:
                 if edge.scene():
                     self.scene.removeItem(edge)
             except Exception:
                 pass
 
-        # Eliminar el nodo de la escena
+        # Delete node from scene
         try:
             if node.scene():
                 self.scene.removeItem(node)
         except Exception:
             pass
 
-        # Eliminar el estado del modelo
+        # Delete state from model
         try:
             if node.state in self.fsm.states:
                 self.fsm.states.remove(node.state)
@@ -467,13 +467,13 @@ class GraphView(QGraphicsView):
             pass
 
     def delete_edge(self, edge):
-        """Elimina una arista/transition individualmente."""
+        """Deletes an edge/transition individually."""
         from commands import DeleteTransitionCommand
 
-        # Crear comando
+        # Create command
         command = DeleteTransitionCommand(self.fsm, self, edge)
 
-        # Ejecutar a través del command_manager
+        # Execute through command_manager
         if self.command_manager:
             self.command_manager.execute(command)
             if self.on_command_executed:
@@ -481,13 +481,13 @@ class GraphView(QGraphicsView):
         else:
             command.execute()
 
-        # Notificar que hay cambios
+        # Notify that there are changes
         if self.on_change_callback:
             self.on_change_callback()
 
     def _delete_edge_impl(self, edge):
-        """Implementación interna de eliminar transición (sin comandos)"""
-        # Quitar referencias en nodos
+        """Internal implementation of transition deletion (without commands)"""
+        # Remove references in nodes
         try:
             if edge in edge.source.edges:
                 edge.source.edges.remove(edge)
@@ -499,21 +499,21 @@ class GraphView(QGraphicsView):
         except Exception:
             pass
 
-        # Eliminar la transición del modelo
+        # Delete transition from model
         try:
             if edge.transition in self.fsm.transitions:
                 self.fsm.transitions.remove(edge.transition)
         except Exception:
             pass
 
-        # Eliminar la flecha asociada si existe
+        # Delete associated arrow if exists
         try:
             if hasattr(edge, 'arrow') and edge.arrow and edge.arrow.scene():
                 self.scene.removeItem(edge.arrow)
         except Exception:
             pass
 
-        # Eliminar la arista de la escena
+        # Delete edge from scene
         try:
             if edge.scene():
                 self.scene.removeItem(edge)
